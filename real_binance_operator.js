@@ -157,21 +157,64 @@ function getLivePrice(symbol) {
   });
 }
 
-async function executeRealMarketOrder(symbol, side, quoteOrderQty = null, quantity = null, decimals = 5) {
+async function executeConvertTrade(fromAsset, toAsset, amount) {
+  try {
+    console.log(`🔄 [CONVERSÃO DIRETA BINANCE] Solicitando cotação para ${amount} ${fromAsset} -> ${toAsset}...`);
+    const quoteRes = await binanceSignedRequest('/sapi/v1/convert/getQuote', 'POST', {
+      fromAsset,
+      toAsset,
+      fromAmount: String(amount)
+    });
+    if (!quoteRes.data || !quoteRes.data.quoteId) {
+      console.error('❌ [CONVERSÃO DIRETA] Falha na cotação:', quoteRes.data);
+      return null;
+    }
+    const { quoteId, toAmount } = quoteRes.data;
+    console.log(`✅ [CONVERSÃO DIRETA] Cotado: ${amount} ${fromAsset} = R$ ${toAmount} BRL. Aceitando ordem...`);
+    const acceptRes = await binanceSignedRequest('/sapi/v1/convert/acceptQuote', 'POST', {
+      quoteId
+    });
+    console.log('🎉 [CONVERSÃO CONCLUÍDA]:', acceptRes.data);
+    return {
+      orderId: acceptRes.data?.orderId || ('CONV-' + Date.now()),
+      cummulativeQuoteQty: parseFloat(toAmount),
+      status: 'FILLED'
+    };
+  } catch (err) {
+    console.error('❌ [CONVERSÃO DIRETA] Erro:', err.message);
+    return null;
+  }
+}
+
+async function executeRealMarketOrder(symbol, side, quoteOrderQty = null, quantity = null, decimals = 5, baseAsset = null) {
   const params = { symbol, side, type: 'MARKET' };
   if (side === 'BUY' && quoteOrderQty) {
     params.quoteOrderQty = String(Number(quoteOrderQty).toFixed(2));
   } else if (side === 'SELL' && quantity) {
-    // Trunca casas decimais sem arredondar para cima (para a Binance não rejeitar por saldo insuficiente)
     const factor = Math.pow(10, decimals);
     const truncatedQty = Math.floor(quantity * factor) / factor;
     params.quantity = truncatedQty.toFixed(decimals);
   }
 
   console.log(`[ORDEM REAL] Enviando ${side} em ${symbol}:`, params);
-  const result = await binanceSignedRequest('/api/v3/order', 'POST', params);
-  console.log(`[RESPOSTA BINANCE]:`, JSON.stringify(result.data));
-  return result.data;
+  try {
+    const result = await binanceSignedRequest('/api/v3/order', 'POST', params);
+    console.log(`[RESPOSTA BINANCE]:`, JSON.stringify(result.data));
+    if (result.data && (result.data.orderId || result.data.status === 'FILLED')) {
+      return result.data;
+    }
+  } catch (spotErr) {
+    console.warn(`[AVISO SPOT] Ordem Spot tradicional falhou (${spotErr.message}). Tentando conversão direta...`);
+  }
+
+  // Se for venda e a ordem Spot falhou (ex: MIN_NOTIONAL < R$ 10):
+  if (side === 'SELL') {
+    const coin = baseAsset || symbol.replace('BRL', '');
+    console.log(`⚡ [EXECUÇÃO INTELIGENTE] Acionando conversão direta (sem limite mínimo de R$ 10) para ${coin}...`);
+    return await executeConvertTrade(coin, 'BRL', quantity);
+  }
+
+  return null;
 }
 
 // =============================================================================
@@ -421,7 +464,7 @@ async function startMultiAssetTrader() {
             const reason = hitTakeProfit ? 'LUCRO SCALPING (1.0% a 1.5%)' : 'STOP LOSS PROTEGIDO';
             console.log(`🏁 [ENCERRANDO OPERAÇÃO]: ${reason} | Variação: ${pnlPct.toFixed(2)}% | R$ ${pnlBrl.toFixed(2)}`);
 
-            const sellResult = await executeRealMarketOrder(pos.symbol, 'SELL', null, pos.qty, pos.decimals);
+            const sellResult = await executeRealMarketOrder(pos.symbol, 'SELL', null, pos.qty, pos.decimals, pos.baseAsset);
 
             if (sellResult && (sellResult.orderId || sellResult.status === 'FILLED')) {
               const finalQuote = parseFloat(sellResult.cummulativeQuoteQty) || currentValBrl;

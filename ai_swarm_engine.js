@@ -371,6 +371,8 @@ class DarwinSwarmEngine {
     // DESATIVADO: Chega de dados inventados ou aleatórios. Apenas dados reais da Binance.
     return;
   }
+
+  _legacyStepSimulation() {
     this.assets.forEach(asset => {
       const microDrift = (Math.random() - 0.493) * asset.volatility * asset.price * 0.28;
       asset.price = Math.max(0.01, Number((asset.price + microDrift).toFixed(4)));

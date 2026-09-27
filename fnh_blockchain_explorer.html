@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FNH BLOCKCHAIN NETWORK — Sistema Independente da Moeda FNH (10 Dígitos | US$ 1,00)</title>
+  <style>
+    :root {
+      --bg-dark: #060911;
+      --bg-card: #0d1322;
+      --bg-card-alt: #11192e;
+      --border: rgba(255, 255, 255, 0.09);
+      --gold: #f59e0b;
+      --emerald: #10b981;
+      --cyan: #38bdf8;
+      --purple: #a855f7;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      padding-bottom: 3rem;
+    }
+    .topbar {
+      background: rgba(13, 19, 34, 0.95);
+      border-bottom: 1px solid rgba(245, 158, 11, 0.35);
+      padding: 1rem 1.8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+    .brand-coin {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f59e0b, #b45309);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 1.05rem;
+      color: #000;
+      box-shadow: 0 0 18px rgba(245, 158, 11, 0.45);
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.22rem 0.65rem;
+      border-radius: 999px;
+      font-size: 0.73rem;
+      font-weight: 700;
+    }
+    .container {
+      max-width: 1360px;
+      margin: 1.5rem auto;
+      padding: 0 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.2rem;
+    }
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.2rem;
+    }
+    .card-title {
+      font-size: 0.96rem;
+      font-weight: 800;
+      margin-bottom: 0.65rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn {
+      cursor: pointer;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: #1e293b;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.82rem;
+      transition: 0.15s;
+    }
+    .btn:hover { filter: brightness(1.15); }
+    .btn-emerald { background: #10b981; color: #042f2e; border-color: #059669; }
+    .btn-purple { background: linear-gradient(90deg, #9333ea, #4f46e5); border: none; }
+    .btn-gold { background: #f59e0b; color: #000; border-color: #d97706; }
+    .mono { font-family: 'Courier New', monospace; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+    th, td {
+      text-align: left;
+      padding: 0.6rem 0.65rem;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    th { color: var(--text-muted); font-size: 0.72rem; text-transform: uppercase; }
+    .progress-track {
+      width: 100%;
+      height: 9px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 99px;
+      overflow: hidden;
+      margin: 0.45rem 0 0.85rem;
+    }
+    .progress-bar { height: 100%; background: var(--emerald); }
+    .key-box {
+      background: #05070c;
+      border: 1px solid rgba(255,255,255,0.1);
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.76rem;
+      word-break: break-all;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPO DO SISTEMA INDEPENDENTE FNH -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-coin">FNH</div>
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+          <h1 style="font-size: 1.2rem; letter-spacing: 0.5px;">FNH BLOCKCHAIN CORE NETWORK</h1>
+          <span class="badge" style="background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid rgba(245,158,11,0.5);">
+            REDE PRÓPRIA INDEPENDENTE (SEPARADA DO ROBÔ)
+          </span>
+          <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981;" id="topPriceBadge">
+            1,0000000000 FNH = US$ 1,0000
+          </span>
+        </div>
+        <div style="font-size: 0.78rem; color: var(--text-muted);">
+          Precisão de <strong>10 Casas Decimais (0,0000000001)</strong> • <strong>30% Parte Aberta</strong> • <strong>70% Cofre Fechado (Libera 5% a cada 4 Anos via SHA-256d)</strong>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+      <button class="btn btn-gold" id="btnOpenSolidityModal">📜 Contrato Oficial Solidity (MetaMask)</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- 1. VISOR DA CARTEIRA DE 10 DÍGITOS E COTAÇÃO FINANCEIRA -->
+    <section class="grid-4">
+      <div class="card" style="border-color: rgba(245,158,11,0.5); grid-column: span 2;">
+        <div class="card-title" style="color: #fbbf24;">
+          <span>💼 SALDO DA SUA CARTEIRA FNH (10 DÍGITOS PARA FORMAR 1 MOEDA)</span>
+          <span class="badge" style="background: rgba(245,158,11,0.15); color: #fbbf24;">10^10 SUB-UNIDADES</span>
+        </div>
+        <div id="walletBalance10" class="mono" style="font-size: 1.9rem; font-weight: 900; color: #fff; margin: 0.25rem 0;">
+          0,0000000000 <span style="color: #fbbf24; font-size: 1.2rem;">FNH</span>
+        </div>
+        <div style="display: flex; gap: 1.4rem; font-size: 0.8rem; color: var(--text-muted); flex-wrap: wrap;">
+          <span>🔓 Coletado dos 30% Abertos: <strong id="walletFromOpen" style="color: #10b981;">0,0000000000 FNH</strong></span>
+          <span>⛏️ Minerado dos 70% Fechados: <strong id="walletFromVault" style="color: #c084fc;">0,0000000000 FNH</strong></span>
+        </div>
+      </div>
+
+      <div class="card" style="border-color: rgba(16,185,129,0.4);">
+        <div class="card-title" style="color: #10b981;">
+          <span>💵 PATRIMÔNIO EM DÓLAR & REAL</span>
+        </div>
+        <div id="walletUsd" style="font-size: 1.55rem; font-weight: 900; color: #10b981;">US$ 0,000000</div>
+        <div id="walletBrl" style="font-size: 0.95rem; font-weight: 700; color: #38bdf8; margin-top: 0.15rem;">R$ 0,0000</div>
+        <div style="font-size: 0.74rem; color: var(--text-muted); margin-top: 0.4rem;">
+          Valor Inicial Gênesis: <strong>US$ 1,00</strong> por 1,0000000000 FNH
+        </div>
+      </div>
+
+      <div class="card" style="border-color: rgba(56,189,248,0.4);">
+        <div class="card-title" style="color: #38bdf8;">
+          <span>📊 LIQUIDEZ & SUPRIMENTO</span>
+        </div>
+        <div style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.25rem;">
+          <div>Total Máximo: <strong class="mono">100.000.000,0000000000</strong></div>
+          <div>30% Aberto: <strong class="mono" style="color:#10b981;">30.000.000,0000000000</strong></div>
+          <div>70% Cofre 4 Anos: <strong class="mono" style="color:#c084fc;">70.000.000,0000000000</strong></div>
+          <div>Market Cap: <strong id="marketCapUsd" style="color:#fbbf24;">US$ 100.000.000,00</strong></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. OPERAÇÃO: 30% PARTE ABERTA VS 70% COFRE FECHADO (5% A CADA 4 ANOS) -->
+    <section class="grid-2">
+      <!-- LADO 30% ABERTO -->
+      <div class="card" style="border-color: rgba(16,185,129,0.45); background: linear-gradient(160deg, rgba(16,185,129,0.06), #0d1322);">
+        <div class="card-title">
+          <span style="color: #10b981;">🔓 1. PARTE ABERTA PARA COLETAR (30% DO TOTAL)</span>
+          <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981;">ABERTA AO PÚBLICO</span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Equivale a <strong>30.000.000,0000000000 FNH</strong> destrancados desde o Bloco Gênesis para distribuição inicial, adoção da moeda e formação de liquidez:
+        </p>
+        <div style="display: flex; justify-content: space-between; font-size: 0.78rem;">
+          <span>Já Coletado: <strong id="openCollected" class="mono" style="color:#10b981;">0,0000000000 FNH</strong></span>
+          <span>Disponível (30%): <strong id="openRemaining" class="mono" style="color:#fbbf24;">30.000.000,0000000000 FNH</strong></span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" id="openBar" style="width: 1%;"></div>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button class="btn btn-emerald" id="btnCollectMicro" style="flex: 1;">
+            ⚡ Coletar Fração de 10 Dígitos (30%)
+          </button>
+          <button class="btn" id="btnCollectOne" style="flex: 1; border-color: #10b981; color: #10b981;">
+            🪙 Coletar +1,0000000000 FNH Inteira
+          </button>
+        </div>
+      </div>
+
+      <!-- LADO 70% FECHADO (ALTA COMPLEXIDADE — 5% A CADA 4 ANOS) -->
+      <div class="card" style="border-color: rgba(168,85,247,0.5); background: linear-gradient(160deg, rgba(168,85,247,0.08), #0d1322);">
+        <div class="card-title">
+          <span style="color: #c084fc;">🔒 2. PARTE FECHADA: COFRE 70% (LIBERA 5% A CADA 4 ANOS)</span>
+          <span class="badge" style="background: rgba(168,85,247,0.25); color: #e9d5ff;" id="epochBadge">
+            ÉPOCA #1/14 (5% ATIVO)
+          </span>
+        </div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Equivale a <strong>70.000.000,0000000000 FNH</strong> trancados em grau de complexidade grande (<strong>Duplo SHA-256</strong>). Só libera <strong>5% (5.000.000 FNH) a cada 4 anos</strong> (56 anos no total):
+        </p>
+        <div style="display: flex; justify-content: space-between; font-size: 0.78rem; margin-bottom: 0.3rem; flex-wrap: wrap;">
+          <span>Liberado neste Ciclo de 4 Anos (5%): <strong id="epochAvail" class="mono" style="color:#38bdf8;">5.000.000,0000000000 FNH</strong></span>
+          <span>Próx. +5%: <strong id="epochCountdown" style="color:#fbbf24;">1461 dias</strong></span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+          Extraído via PoW: <strong id="vaultMined" class="mono" style="color:#c084fc;">0,0000000000 FNH</strong> • Restante no Cofre 70%: <strong id="vaultRemaining" class="mono">70.000.000,0000000000 FNH</strong>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+          <button class="btn btn-purple" id="btnMineSingle" style="flex: 1;">
+            ⛏️ Quebrar Bloco SHA-256d (Minerar 70%)
+          </button>
+          <button class="btn" id="btnMineAuto" style="flex: 1; border-color: #c084fc; color: #e9d5ff;">
+            🔄 Ligar Minerador Contínuo SHA-256d
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONSOLE DE PROVA DE TRABALHO (SHA-256d) -->
+    <section class="card" style="background: #05070c; border-color: rgba(56,189,248,0.3);">
+      <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.4rem; flex-wrap: wrap;">
+        <span>⚙️ <strong>MOTOR CRIPTOGRÁFICO DE PROVA DE TRABALHO (DOUBLE SHA-256 + ASSINATURA ECDSA)</strong></span>
+        <span>Hashes Calculados: <strong id="totalHashes" style="color:#38bdf8;">0</strong> | Blocos na Cadeia: <strong id="totalBlocks" style="color:#fbbf24;">1</strong></span>
+      </div>
+      <div id="miningConsole" class="mono" style="font-size: 0.8rem; color: #10b981; word-break: break-all;">
+        [BLOCO GÊNESIS #0] Rede FNH iniciada com sucesso. Clique nos botões acima para coletar dos 30% ou minerar os 70%!
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- OS 4 PILARES TÉCNICOS: ARMAZENAMENTO, CHAVE/CRIPTOGRAFIA, RASTREIO E VALOR -->
+    <!-- ========================================================================= -->
+    <section class="grid-2">
+
+      <!-- PILAR 1 E 2: CHAVE CRIPTOGRÁFICA (ECDSA secp256k1) & ARMAZENAMENTO IMUTÁVEL -->
+      <div class="card" style="border-color: rgba(245,158,11,0.4);">
+        <div class="card-title" style="color: #fbbf24;">
+          <span>🔐 PILAR 1 & 2: ARMAZENAMENTO E CHAVES CRIPTOGRÁFICAS REAIS</span>
+          <span class="badge" style="background: rgba(245,158,11,0.15); color: #fbbf24;">ECDSA secp256k1</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Suas moedas não ficam "soltas": elas são protegidas por um <strong>Par de Chaves Assimétricas na curva elíptica secp256k1</strong> (a mesma criptografia do Bitcoin) e salvas no Livro-Razão imutável <code>fnh_blockchain_state.json</code>:
+        </p>
+
+        <div style="margin-bottom: 0.65rem;">
+          <div style="font-size: 0.74rem; color: #10b981; font-weight: 700;">
+            1. SEU ENDEREÇO PÚBLICO FNH (Pode enviar para qualquer pessoa receber moedas):
+          </div>
+          <div class="key-box" id="cryptoAddress" style="color: #10b981;">Carregando...</div>
+        </div>
+
+        <div style="margin-bottom: 0.65rem;">
+          <div style="font-size: 0.74rem; color: #38bdf8; font-weight: 700;">
+            2. SUA CHAVE PÚBLICA (Valida suas assinaturas digitais na rede):
+          </div>
+          <div class="key-box" id="cryptoPubKey" style="color: #38bdf8;">Carregando...</div>
+        </div>
+
+        <div style="margin-bottom: 0.65rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.74rem; color: #f43f5e; font-weight: 700;">
+              3. SUA CHAVE PRIVADA SECRETA (Quem tem esta chave é o dono absoluto das moedas):
+            </span>
+            <button class="btn" id="btnTogglePrivKey" style="padding: 0.2rem 0.55rem; font-size: 0.7rem;">👁️ Mostrar Chave Completa</button>
+          </div>
+          <div class="key-box" id="cryptoPrivKey" style="color: #fbbf24;">Carregando...</div>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255,255,255,0.03); padding: 0.65rem; border-radius: 8px;">
+          💾 <strong>Como funciona o Armazenamento:</strong> Cada bloco guarda o <code>Hash SHA-256</code> do bloco anterior. Se alguém abrir o arquivo no computador e tentar mudar seu saldo manualmente, o Hash quebra na hora e a rede invalida a fraude.
+        </div>
+      </div>
+
+      <!-- PILAR 4: COMO FUNCIONA O VALOR REAL FINANCEIRO (DÓLAR US$ 1,00 / PIX / CORRETORA) -->
+      <div class="card" style="border-color: rgba(16,185,129,0.4);">
+        <div class="card-title" style="color: #10b981;">
+          <span>🏦 PILAR 4: COMO A MOEDA FNH TEM VALOR REAL FINANCEIRO (US$ 1,00 ➔ R$)</span>
+          <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981;">LASTRO & LIQUIDEZ</span>
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Nenhuma moeda no mundo tem valor financeiro só por existir no código. Para que <strong>1,0000000000 FNH valha US$ 1,00 de verdade</strong> (sacável em Dólar/PIX), o mercado financeiro cripto funciona através do <strong>Cofre de Liquidez Pareada (Liquidity Pool)</strong>:
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 0.65rem; font-size: 0.78rem;">
+          <div style="background: rgba(16,185,129,0.06); border-left: 3px solid #10b981; padding: 0.6rem 0.75rem; border-radius: 4px;">
+            <strong>Passo 1 — O Registro na Blockchain Pública (BNB Chain / Polygon):</strong><br/>
+            Você publica o Contrato Inteligente <code>FNHCryptoAsset.sol</code> (que já está pronto no botão laranja no topo) usando sua carteira <strong>MetaMask</strong>.
+          </div>
+
+          <div style="background: rgba(56,189,248,0.06); border-left: 3px solid #38bdf8; padding: 0.6rem 0.75rem; border-radius: 4px;">
+            <strong>Passo 2 — A Âncora de Preço em US$ 1,00 (PancakeSwap / Uniswap):</strong><br/>
+            Na corretora descentralizada (DEX), você cria o par <strong>FNH / USDT (Dólar Real)</strong> na proporção <strong>1 para 1</strong>.
+            Exemplo: Se você depositar <code>100,0000000000 FNH</code> + <code>US$ 100,00 USDT</code> no cofre da corretora, o preço oficial mundial da moeda FNH nasce exatamente em <strong>US$ 1,00</strong>!
+          </div>
+
+          <div style="background: rgba(245,158,11,0.06); border-left: 3px solid #f59e0b; padding: 0.6rem 0.75rem; border-radius: 4px;">
+            <strong>Passo 3 — Valorização e Saque em Dinheiro Real:</strong><br/>
+            Como <strong>70% das moedas FNH estão trancadas</strong> (liberando apenas 5% a cada 4 anos), há poucas moedas circulando. Sempre que compradores colocam Dólar (USDT) na piscina para comprar FNH, o preço da sua FNH sobe acima de US$ 1,00 e qualquer detentor pode vender FNH por USDT/Reais na hora!
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PILAR 3: RASTREIO COMPLETO (EXPLORADOR DE TRANSAÇÕES & BLOCOS ENCADEDOS) -->
+    <section class="grid-2">
+      <div class="card">
+        <div class="card-title">
+          <span style="color: #38bdf8;">🔎 PILAR 3: RASTREIO DE CADA FRAÇÃO DE 10 DÍGITOS (LIVRO-RAZÃO)</span>
+        </div>
+        <div style="overflow-x: auto; max-height: 310px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Horário</th>
+                <th>Origem Rastreada</th>
+                <th>Quantidade (10 Dígitos)</th>
+                <th>Hash Tx & Assinatura Digital</th>
+              </tr>
+            </thead>
+            <tbody id="txExplorerBody">
+              <tr><td colspan="4" style="color: var(--text-muted);">Nenhuma coleta/mineração recente...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span style="color: #c084fc;">🧱 CADEIA DE BLOCOS MINERADOS (ENCADEAMENTO SHA-256d)</span>
+        </div>
+        <div style="overflow-x: auto; max-height: 310px;">
+          <table>
+            <thead>
+              <tr>
+                <th>Bloco</th>
+                <th>Grau / Origem</th>
+                <th>Recompensa (10 Dígitos)</th>
+                <th>Hash SHA-256d & Elo Anterior</th>
+              </tr>
+            </thead>
+            <tbody id="blocksExplorerBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CRONOGRAMA DOS 14 CICLOS DE 4 ANOS (5% CADA = 70%) -->
+    <section class="card">
+      <div class="card-title">
+        <span style="color: #e9d5ff;">📅 CRONOGRAMA MATEMÁTICO DOS 70% FECHADOS (LIBERAÇÃO DE 5% A CADA 4 ANOS = 56 ANOS)</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Época (Ciclo)</th>
+              <th>Janela de 4 Anos</th>
+              <th>Desbloqueio no Ciclo</th>
+              <th>Total Destrancado</th>
+              <th>Quantidade FNH (10 Dígitos)</th>
+              <th>Status Criptográfico</th>
+            </tr>
+          </thead>
+          <tbody id="epochsScheduleBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DO CONTRATO INTELIGENTE SOLIDITY -->
+  <dialog id="solidityModal" style="max-width: 820px; width: 94%; margin: auto; background: #0d1322; color: #fff; border: 1px solid #f59e0b; border-radius: 12px; padding: 1.2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+      <h3 style="color: #fbbf24;">📜 Contrato Oficial Solidity — FNHCryptoAsset.sol</h3>
+      <button class="btn" id="btnCloseSolidityModal">✕ Fechar</button>
+    </div>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+      Para registrar sua moeda FNH na blockchain pública (BNB Chain da Binance, Polygon ou Ethereum), copie este código e publique no <a href="https://remix.ethereum.org" target="_blank" style="color:#38bdf8;">Remix Ethereum IDE</a> com sua carteira MetaMask:
+    </p>
+    <pre id="soliditySourceCode" style="background: #05070c; color: #10b981; padding: 1rem; border-radius: 8px; max-height: 380px; overflow: auto; font-size: 0.75rem;"></pre>
+    <div style="display: flex; justify-content: flex-end; margin-top: 0.85rem;">
+      <button class="btn btn-gold" id="btnCopySolidity">📋 Copiar Contrato Inteligente</button>
+    </div>
+  </dialog>
+
+  <script>
+    let showFullPrivKey = false;
+    let lastStateCache = null;
+    let autoMineInterval = null;
+
+    function renderState(state, consoleBanner) {
+      lastStateCache = state;
+      if (!state || !state.wallet) return;
+
+      document.getElementById('walletBalance10').innerHTML =
+        `${state.wallet.balanceFormatted} <span style="color: #fbbf24; font-size: 1.2rem;">FNH</span>`;
+      document.getElementById('walletFromOpen').textContent = `${state.wallet.fromOpenPoolFormatted} FNH`;
+      document.getElementById('walletFromVault').textContent = `${state.wallet.fromVaultMiningFormatted} FNH`;
+
+      const pUsd = state.pricing ? state.pricing.currentPriceUsd : 1.0;
+      const pBrl = state.pricing ? state.pricing.currentPriceBrl : 5.45;
+      document.getElementById('topPriceBadge').textContent =
+        `1,0000000000 FNH = US$ ${pUsd.toLocaleString('pt-BR', { minimumFractionDigits: 4 })} (R$ ${pBrl.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`;
+
+      document.getElementById('walletUsd').textContent =
+        `US$ ${Number(state.wallet.valueUsd || 0).toLocaleString('pt-BR', { minimumFractionDigits: 6, maximumFractionDigits: 6 })}`;
+      document.getElementById('walletBrl').textContent =
+        `R$ ${Number(state.wallet.valueBrl || 0).toLocaleString('pt-BR', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`;
+      document.getElementById('marketCapUsd').textContent =
+        `US$ ${Number(state.pricing.marketCapUsd || 100000000).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+
+      // 30% Aberto
+      const open30 = state.supply.openPool30;
+      document.getElementById('openCollected').textContent = open30.collectedFormatted;
+      document.getElementById('openRemaining').textContent = open30.remainingFormatted;
+      document.getElementById('openBar').style.width = `${Math.max(1, open30.percentCollected)}%`;
+
+      // 70% Fechado
+      const v70 = state.supply.lockedVault70;
+      const ep = v70.epochStatus;
+      document.getElementById('epochAvail').textContent = `${ep.availableToMineNowFormatted} FNH`;
+      document.getElementById('epochCountdown').textContent = `${ep.daysUntilNextUnlock} dias (Ciclo 4 Anos)`;
+      document.getElementById('vaultMined').textContent = v70.minedFormatted;
+      document.getElementById('vaultRemaining').textContent = v70.remainingFormatted;
+
+      // Estatísticas de Mineração
+      document.getElementById('totalHashes').textContent =
+        Number(state.miningStats.totalHashesComputed || 0).toLocaleString('pt-BR');
+      document.getElementById('totalBlocks').textContent = state.miningStats.blocksMinedCount || 1;
+
+      if (consoleBanner) {
+        document.getElementById('miningConsole').innerHTML = consoleBanner;
+      }
+
+      // Chaves Criptográficas
+      if (state.cryptography) {
+        document.getElementById('cryptoAddress').textContent = state.cryptography.walletAddress;
+        document.getElementById('cryptoPubKey').textContent = state.cryptography.publicKeyHex;
+        document.getElementById('cryptoPrivKey').textContent = showFullPrivKey
+          ? state.cryptography.privateKeyFull
+          : `${state.cryptography.privateKeyMasked} (Protegida por ECDSA secp256k1)`;
+      }
+
+      // Rastreio de Transações
+      const txBody = document.getElementById('txExplorerBody');
+      if (Array.isArray(state.recentTransactions) && state.recentTransactions.length > 0) {
+        txBody.innerHTML = state.recentTransactions.map(tx => `
+          <tr>
+            <td>${tx.timestamp}</td>
+            <td><span style="color:${tx.type.includes('OPEN') ? '#10b981' : '#c084fc'}; font-weight:700;">${tx.originPool || tx.type}</span></td>
+            <td class="mono" style="color:#fbbf24; font-weight:700;">+${tx.amountFormatted}</td>
+            <td class="mono" style="font-size:0.7rem; color:#94a3b8;">
+              Hash: ${tx.txHash.slice(0, 22)}...<br/>
+              Assinatura ECDSA: ${(tx.digitalSignature || '').slice(0, 22)}...
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Cadeia de Blocos
+      const blocksBody = document.getElementById('blocksExplorerBody');
+      if (Array.isArray(state.recentBlocks)) {
+        blocksBody.innerHTML = state.recentBlocks.map(b => `
+          <tr>
+            <td><strong>#${b.index}</strong></td>
+            <td style="color:#c084fc;">${b.type}</td>
+            <td class="mono" style="color:#10b981; font-weight:700;">+${b.rewardFormatted}</td>
+            <td class="mono" style="font-size:0.7rem; color:#94a3b8;">
+              Atual: 0x${b.hash.slice(0, 20)}...<br/>
+              Anterior: 0x${b.previousHash.slice(0, 20)}...
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Cronograma de 14 Épocas de 4 anos
+      const epBody = document.getElementById('epochsScheduleBody');
+      if (ep && Array.isArray(ep.schedule)) {
+        epBody.innerHTML = ep.schedule.map(row => {
+          const active = row.status === 'ACTIVE_MINING_WINDOW';
+          return `
+            <tr style="${active ? 'background: rgba(168,85,247,0.16); font-weight:700;' : ''}">
+              <td>Ciclo #${row.epoch}/14</td>
+              <td>${row.periodLabel}</td>
+              <td style="color:#10b981;">+${row.unlockPercent}% Liberado</td>
+              <td style="color:#38bdf8;">${row.cumulativeVaultPercent}% / 70%</td>
+              <td class="mono">${row.amountUnlockedFormatted}</td>
+              <td>${active ? '<span style="color:#10b981;">🟢 DESTRANCADO P/ MINERAÇÃO SHA-256d</span>' : '<span style="color:#fbbf24;">🔒 TRANCADO (TIME-LOCK 4 ANOS)</span>'}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+
+    async function loadState() {
+      const res = await fetch('/api/token/state');
+      const data = await res.json();
+      renderState(data);
+    }
+
+    async function collectOpen(mode) {
+      const res = await fetch('/api/token/collect-open', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode })
+      });
+      const data = await res.json();
+      if (data.state) {
+        renderState(
+          data.state,
+          `🔓 <strong>[PARTE ABERTA 30% COLETADA]</strong> Creditado <strong>+${data.tx.amountFormatted}</strong> | Assinatura ECDSA validada | Hash: ${data.tx.txHash}`
+        );
+      }
+    }
+
+    async function mineVault() {
+      const res = await fetch('/api/token/mine-vault', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hashBatchSize: 40000 })
+      });
+      const data = await res.json();
+      if (data.state && data.block) {
+        const b = data.block;
+        renderState(
+          data.state,
+          `⛏️ <strong style="color:#c084fc;">[${b.type}]</strong> Bloco #${b.index} | Nonce: <strong>${b.nonce}</strong> | Velocidade: <strong>${b.hashrateHps.toLocaleString('pt-BR')} Hashes/seg</strong> | Extraído: <strong style="color:#fbbf24;">+${b.rewardFormatted}</strong><br/><span style="color:#94a3b8;">Hash Duplo SHA-256: 0x${b.hash}</span>`
+        );
+      }
+    }
+
+    document.getElementById('btnCollectMicro').addEventListener('click', () => collectOpen('MICRO_10_DIGITS'));
+    document.getElementById('btnCollectOne').addEventListener('click', () => collectOpen('BOOST_1_FNH'));
+    document.getElementById('btnMineSingle').addEventListener('click', () => mineVault());
+
+    document.getElementById('btnMineAuto').addEventListener('click', (e) => {
+      const btn = e.currentTarget;
+      if (autoMineInterval) {
+        clearInterval(autoMineInterval);
+        autoMineInterval = null;
+        btn.textContent = '🔄 Ligar Minerador Contínuo SHA-256d';
+        btn.style.background = '';
+      } else {
+        mineVault();
+        autoMineInterval = setInterval(mineVault, 1300);
+        btn.textContent = '⏹️ Parar Minerador SHA-256d (Ativo)';
+        btn.style.background = '#dc2626';
+      }
+    });
+
+    document.getElementById('btnTogglePrivKey').addEventListener('click', (e) => {
+      showFullPrivKey = !showFullPrivKey;
+      e.currentTarget.textContent = showFullPrivKey ? '🙈 Ocultar Chave Privada' : '👁️ Mostrar Chave Completa';
+      if (lastStateCache) renderState(lastStateCache);
+    });
+
+    const modal = document.getElementById('solidityModal');
+    document.getElementById('btnOpenSolidityModal').addEventListener('click', async () => {
+      const res = await fetch('/api/token/contract');
+      const data = await res.json();
+      document.getElementById('soliditySourceCode').textContent = data.soliditySource;
+      modal.showModal();
+    });
+    document.getElementById('btnCloseSolidityModal').addEventListener('click', () => modal.close());
+    document.getElementById('btnCopySolidity').addEventListener('click', (e) => {
+      navigator.clipboard.writeText(document.getElementById('soliditySourceCode').textContent);
+      e.currentTarget.textContent = '✅ Copiado!';
+      setTimeout(() => (e.currentTarget.textContent = '📋 Copiar Contrato Inteligente'), 2000);
+    });
+
+    loadState();
+  </script>
+</body>
+</html>
