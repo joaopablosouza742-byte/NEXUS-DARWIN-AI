@@ -35,14 +35,16 @@ const MONITORED_ASSETS = [
   { symbol: 'BTCBRL', baseAsset: 'BTC', name: 'Bitcoin', decimals: 5, minQty: 0.00001 },
   { symbol: 'SOLBRL', baseAsset: 'SOL', name: 'Solana', decimals: 3, minQty: 0.001 },
   { symbol: 'ETHBRL', baseAsset: 'ETH', name: 'Ethereum', decimals: 4, minQty: 0.0001 },
-  { symbol: 'BNBBRL', baseAsset: 'BNB', name: 'BNB', decimals: 3, minQty: 0.001 }
+  { symbol: 'BNBBRL', baseAsset: 'BNB', name: 'BNB', decimals: 3, minQty: 0.001 },
+  { symbol: 'USDCBRL', baseAsset: 'USDC', name: 'USD Coin', decimals: 2, minQty: 0.1 }
 ];
 
 const priceHistories = {
   'BTCBRL': [],
   'SOLBRL': [],
   'ETHBRL': [],
-  'BNBBRL': []
+  'BNBBRL': [],
+  'USDCBRL': []
 };
 
 // =============================================================================
@@ -169,15 +171,17 @@ async function executeConvertTrade(fromAsset, toAsset, amount) {
       console.error('❌ [CONVERSÃO DIRETA] Falha na cotação:', quoteRes.data);
       return null;
     }
-    const { quoteId, toAmount } = quoteRes.data;
-    console.log(`✅ [CONVERSÃO DIRETA] Cotado: ${amount} ${fromAsset} = R$ ${toAmount} BRL. Aceitando ordem...`);
+    const { quoteId, toAmount, fromAmount: realFrom } = quoteRes.data;
+    console.log(`✅ [CONVERSÃO DIRETA] Cotado: ${realFrom} ${fromAsset} = ${toAmount} ${toAsset}. Aceitando ordem...`);
     const acceptRes = await binanceSignedRequest('/sapi/v1/convert/acceptQuote', 'POST', {
       quoteId
     });
     console.log('🎉 [CONVERSÃO CONCLUÍDA]:', acceptRes.data);
+    const isToBrl = toAsset === 'BRL';
     return {
       orderId: acceptRes.data?.orderId || ('CONV-' + Date.now()),
-      cummulativeQuoteQty: parseFloat(toAmount),
+      executedQty: isToBrl ? parseFloat(realFrom) : parseFloat(toAmount),
+      cummulativeQuoteQty: isToBrl ? parseFloat(toAmount) : parseFloat(realFrom),
       status: 'FILLED'
     };
   } catch (err) {
@@ -187,6 +191,16 @@ async function executeConvertTrade(fromAsset, toAsset, amount) {
 }
 
 async function executeRealMarketOrder(symbol, side, quoteOrderQty = null, quantity = null, decimals = 5, baseAsset = null) {
+  const coin = baseAsset || symbol.replace('BRL', '');
+
+  // Se o valor de compra for menor que R$ 10,00, a Binance Spot rejeita por NOTIONAL.
+  // Executa imediatamente via Binance Convert (mínimo a partir de R$ 0,05 centavos):
+  if (side === 'BUY' && quoteOrderQty && Number(quoteOrderQty) < 10.00) {
+    console.log(`⚡ [EXECUÇÃO DIRETA CONVERT] Compra de R$ ${quoteOrderQty} abaixo de R$ 10. Executando via Binance Convert...`);
+    const convResult = await executeConvertTrade('BRL', coin, quoteOrderQty);
+    if (convResult) return convResult;
+  }
+
   const params = { symbol, side, type: 'MARKET' };
   if (side === 'BUY' && quoteOrderQty) {
     params.quoteOrderQty = String(Number(quoteOrderQty).toFixed(2));
@@ -207,11 +221,13 @@ async function executeRealMarketOrder(symbol, side, quoteOrderQty = null, quanti
     console.warn(`[AVISO SPOT] Ordem Spot tradicional falhou (${spotErr.message}). Tentando conversão direta...`);
   }
 
-  // Se for venda e a ordem Spot falhou (ex: MIN_NOTIONAL < R$ 10):
+  // Se a ordem Spot falhou (por exemplo MIN_NOTIONAL < R$ 10):
   if (side === 'SELL') {
-    const coin = baseAsset || symbol.replace('BRL', '');
-    console.log(`⚡ [EXECUÇÃO INTELIGENTE] Acionando conversão direta (sem limite mínimo de R$ 10) para ${coin}...`);
+    console.log(`⚡ [EXECUÇÃO INTELIGENTE] Acionando conversão direta para ${coin}...`);
     return await executeConvertTrade(coin, 'BRL', quantity);
+  } else if (side === 'BUY' && quoteOrderQty) {
+    console.log(`⚡ [EXECUÇÃO INTELIGENTE] Acionando compra direta Convert para ${coin}...`);
+    return await executeConvertTrade('BRL', coin, quoteOrderQty);
   }
 
   return null;
@@ -327,11 +343,23 @@ async function startMultiAssetTrader() {
   const balances = await getRealBalances();
   console.log('[SALDOS REAIS ENCONTRADOS]:', balances);
 
-  // Se já tiver Bitcoin em carteira (ordem anterior):
+  const usdcPrice = (await getLivePrice('USDCBRL')) || 5.70;
+  const usdcTotal = (balances.USDC || 0) + (balances.LDUSDC || 0);
+  const totalBrlEquivalent = (balances.brlFree || 0) + (usdcTotal * usdcPrice);
+  console.log(`[PATRIMÔNIO REAL]: R$ ${(balances.brlFree || 0).toFixed(2)} BRL livres + ${usdcTotal.toFixed(4)} USDC (~R$ ${(usdcTotal * usdcPrice).toFixed(2)}) = Total R$ ${totalBrlEquivalent.toFixed(2)}`);
+
+  ecosystemState.realBalances = {
+    ...balances,
+    usdcTotal,
+    usdcBrlValue: Number((usdcTotal * usdcPrice).toFixed(2))
+  };
+  ecosystemState.totalDepositedCapital = Number(totalBrlEquivalent.toFixed(2));
+  ecosystemState.activeBots[0].currentCapital = Number((balances.brlFree || 5.13).toFixed(2));
+
+  // Se já tiver Bitcoin em carteira (ordem anterior aberta):
   if (balances.BTC && balances.BTC >= 0.00001) {
     const curBtc = (await getLivePrice('BTCBRL')) || 440782;
     const valBrl = balances.BTC * curBtc;
-    ecosystemState.activeBots[0].currentCapital = Number(((balances.brlFree || 0) + valBrl).toFixed(2));
     ecosystemState.activeBots[0].openPosition = {
       symbol: 'BTCBRL',
       assetName: 'Bitcoin',
@@ -356,7 +384,7 @@ async function startMultiAssetTrader() {
     try {
       tickCount++;
 
-      // Atualiza preços de todas as 4 moedas simultaneamente
+      // Atualiza preços de todas as moedas simultaneamente
       for (const asset of MONITORED_ASSETS) {
         const p = await getLivePrice(asset.symbol);
         if (p) {
@@ -370,7 +398,7 @@ async function startMultiAssetTrader() {
         const bot = ecosystemState.activeBots[i];
 
         // ---------------------------------------------------------------------
-        // SE NÃO TEM POSIÇÃO: ESCANEIA A MELHOR OPORTUNIDADE ENTRE AS 4 MOEDAS
+        // SE NÃO TEM POSIÇÃO: ESCANEIA A MELHOR OPORTUNIDADE ENTRE AS MOEDAS
         // ---------------------------------------------------------------------
         if (!bot.openPosition) {
           let bestCandidate = null;
@@ -378,7 +406,7 @@ async function startMultiAssetTrader() {
 
           for (const asset of MONITORED_ASSETS) {
             const h = priceHistories[asset.symbol];
-            if (h.length >= 12) {
+            if (h.length >= 10) {
               const rsi = calcRSI(h, 14);
               const ema9 = calcEMA(h, 9);
               const ema21 = calcEMA(h, 21);
@@ -391,17 +419,17 @@ async function startMultiAssetTrader() {
             }
           }
 
-          // Se achou uma oportunidade de ouro e o robô tem capital livre (mínimo R$ 8,50 em caixa):
-          if (bestCandidate && bot.currentCapital >= 8.50) {
+          // Se achou uma oportunidade e o robô tem no mínimo R$ 2,00 em caixa:
+          if (bestCandidate && bot.currentCapital >= 2.00) {
             const { asset, rsi, price } = bestCandidate;
             const buyAmount = Number(Math.min(bot.currentCapital, 10.00).toFixed(2));
             console.log(`🎯 [OPORTUNIDADE DETECTADA EM ${asset.name}!] RSI: ${rsi.toFixed(1)} | Preço: R$ ${price} | Valor da Ordem: R$ ${buyAmount}`);
 
-            const order = await executeRealMarketOrder(asset.symbol, 'BUY', buyAmount, null, asset.decimals);
+            const order = await executeRealMarketOrder(asset.symbol, 'BUY', buyAmount, null, asset.decimals, asset.baseAsset);
 
             if (order && (order.orderId || order.status === 'FILLED')) {
-              const executedQty = parseFloat(order.executedQty) || (10.00 / price);
-              const cummulativeQuote = parseFloat(order.cummulativeQuoteQty) || 10.00;
+              const executedQty = parseFloat(order.executedQty) || (buyAmount / price);
+              const cummulativeQuote = parseFloat(order.cummulativeQuoteQty) || buyAmount;
               const avgPrice = cummulativeQuote / executedQty || price;
 
               bot.assignedAsset = asset.symbol.replace('BRL', '/BRL');

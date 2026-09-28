@@ -151,6 +151,12 @@
             </div>
 
             <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+              <div style="font-size: 0.72rem; color: var(--text-muted);">EM DÓLAR (USDC / EARN)</div>
+              <div style="font-size: 1.15rem; font-weight: 700; color: #22c55e;" id="realUsdcBrl">0.822 USDC</div>
+              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">~R$ 4,70 em rendimento</div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
               <div style="font-size: 0.72rem; color: var(--text-muted);">LUCRO GUARDADO NO COFRE</div>
               <div style="font-size: 1.15rem; font-weight: 700; color: #a855f7;" id="realVaultBrl">R$ 0,00</div>
               <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">Carteira Funding protegida</div>
@@ -158,7 +164,7 @@
           </div>
         </section>
 
-        <!-- GRÁFICO EM TEMPO REAL DOS 4 ATIVOS MONITÓRIADOS -->
+        <!-- GRÁFICO EM TEMPO REAL DOS ATIVOS MONITÓRIADOS -->
         <section class="section-panel">
           <div class="section-header">
             <div class="section-title">
@@ -182,6 +188,9 @@
             </button>
             <button class="btn" onclick="switchChart('BINANCE:BNBBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
               🟠 BNB (BNB/BRL)
+            </button>
+            <button class="btn" onclick="switchChart('BINANCE:USDCBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+              💵 USD Coin (USDC/BRL)
             </button>
           </div>
 

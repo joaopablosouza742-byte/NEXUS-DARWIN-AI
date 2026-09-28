@@ -89,14 +89,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const realFreeBrlEl = document.getElementById('realFreeBrl');
     if (realFreeBrlEl) {
-      const free = state.realBalances && state.realBalances.brlFree !== undefined ? state.realBalances.brlFree : 1.18;
+      const free = state.realBalances && state.realBalances.brlFree !== undefined ? state.realBalances.brlFree : 5.13;
       realFreeBrlEl.textContent = formatCurrency(free);
+    }
+
+    const realUsdcBrlEl = document.getElementById('realUsdcBrl');
+    if (realUsdcBrlEl) {
+      const usdcTot = state.realBalances ? (state.realBalances.usdcTotal || 0.822) : 0.822;
+      const usdcVal = state.realBalances ? (state.realBalances.usdcBrlValue || 4.70) : 4.70;
+      realUsdcBrlEl.textContent = `${usdcTot.toFixed(3)} USDC (~${formatCurrency(usdcVal)})`;
     }
 
     const realBtcBrlEl = document.getElementById('realBtcBrl');
     if (realBtcBrlEl) {
       const bot = Array.isArray(state.activeBots) && state.activeBots[0];
-      const btcVal = bot && bot.openPosition ? (bot.openPosition.notionalBrl || 8.82) : 0;
+      const btcVal = bot && bot.openPosition ? (bot.openPosition.notionalBrl || 0) : 0;
       realBtcBrlEl.textContent = formatCurrency(btcVal);
     }
 
