@@ -33,19 +33,25 @@ cloudSync.databaseURL = FIREBASE_URL;
 // =============================================================================
 const MONITORED_ASSETS = [
   { symbol: 'BTCBRL', baseAsset: 'BTC', name: 'Bitcoin', decimals: 5, minQty: 0.00001 },
-  { symbol: 'SOLBRL', baseAsset: 'SOL', name: 'Solana', decimals: 3, minQty: 0.001 },
   { symbol: 'ETHBRL', baseAsset: 'ETH', name: 'Ethereum', decimals: 4, minQty: 0.0001 },
+  { symbol: 'SOLBRL', baseAsset: 'SOL', name: 'Solana', decimals: 3, minQty: 0.001 },
   { symbol: 'BNBBRL', baseAsset: 'BNB', name: 'BNB', decimals: 3, minQty: 0.001 },
+  { symbol: 'XRPBRL', baseAsset: 'XRP', name: 'XRP', decimals: 1, minQty: 0.1 },
+  { symbol: 'DOGEBRL', baseAsset: 'DOGE', name: 'Dogecoin', decimals: 0, minQty: 1 },
+  { symbol: 'ADABRL', baseAsset: 'ADA', name: 'Cardano', decimals: 1, minQty: 0.1 },
+  { symbol: 'LINKBRL', baseAsset: 'LINK', name: 'Chainlink', decimals: 2, minQty: 0.01 },
+  { symbol: 'AVAXBRL', baseAsset: 'AVAX', name: 'Avalanche', decimals: 2, minQty: 0.01 },
+  { symbol: 'NEARBRL', baseAsset: 'NEAR', name: 'NEAR Protocol', decimals: 1, minQty: 0.1 },
+  { symbol: 'SUIBRL', baseAsset: 'SUI', name: 'Sui', decimals: 1, minQty: 0.1 },
+  { symbol: 'RENDERBRL', baseAsset: 'RENDER', name: 'Render', decimals: 2, minQty: 0.01 },
+  { symbol: 'LTCBRL', baseAsset: 'LTC', name: 'Litecoin', decimals: 3, minQty: 0.001 },
+  { symbol: 'POLBRL', baseAsset: 'POL', name: 'Polygon', decimals: 1, minQty: 0.1 },
+  { symbol: 'PEPEBRL', baseAsset: 'PEPE', name: 'Pepe', decimals: 0, minQty: 1 },
   { symbol: 'USDCBRL', baseAsset: 'USDC', name: 'USD Coin', decimals: 2, minQty: 0.1 }
 ];
 
-const priceHistories = {
-  'BTCBRL': [],
-  'SOLBRL': [],
-  'ETHBRL': [],
-  'BNBBRL': [],
-  'USDCBRL': []
-};
+const priceHistories = {};
+MONITORED_ASSETS.forEach(a => { priceHistories[a.symbol] = []; });
 
 // =============================================================================
 // 1. COMUNICAÇÃO BINANCE (ASSINADA VIA HMAC-SHA256)
@@ -350,8 +356,7 @@ async function startMultiAssetTrader() {
   console.log('===================================================================');
   console.log(' 🚀 NEXUS DARWIN AI - MOTOR MULTI-CRIPTO 100% REAL (SCALPING)');
   console.log('===================================================================');
-  const currentIp = await getCurrentPublicIp();
-  console.log('[MOEDAS ATIVAS]: Bitcoin (BTC), Solana (SOL), Ethereum (ETH), BNB, USDC');
+  console.log(`[RADAR DINÂMICO PILAR A]: Monitorando ${MONITORED_ASSETS.length} maiores ativos líquidos em BRL!`);
   console.log('[META POR TRADE]: 1.2% a 1.5% c/ Trailing Lock (+0.4% garantido)');
   console.log(`[IP PÚBLICO ATUAL DA MÁQUINA]: ${currentIp}`);
 
