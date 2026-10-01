@@ -271,9 +271,11 @@ const ecosystemState = {
   isRunning: true,
   initialSeedCapital: 10.00,
   targetProfitPerBot: 10.00, // Meta de +R$ 10 somados para clonar novo robô
-  takeProfitMinPct: 1.0,     // Scalping: 1.0% a 1.5% de lucro por trade
+  takeProfitMinPct: 1.2,     // Scalping ideal calibrado: 1.2% a 1.5%
   takeProfitMaxPct: 1.5,
-  stopLossPctPerTrade: 0.9,  // Stop loss de 0.9%
+  stopLossPctPerTrade: 0.9,  // Stop loss de proteção: 0.9%
+  trailingTriggerPct: 1.0,   // Quando o trade atingir +1.0%, ativa o Trailing Lock
+  trailingLockPct: 0.4,      // Trava de saída garantida no lucro (+0.4% no bolso)
 
   masterVaultBalance: 0.00,
   binanceFundingVault: 0.00,
@@ -375,9 +377,8 @@ async function startMultiAssetTrader() {
     console.log(`[POSIÇÃO ATIVA]: ${balances.BTC} BTC monitorando saída no lucro de 1% a 1.5%!`);
   }
 
-  await cloudSync.syncEcosystemState(ecosystemState);
-
   let tickCount = 0;
+  let lastBuyAttempt = 0;
 
   // Loop de Análise Multi-Moedas a cada 2.5 segundos
   setInterval(async () => {
@@ -419,8 +420,9 @@ async function startMultiAssetTrader() {
             }
           }
 
-          // Se achou uma oportunidade e o robô tem no mínimo R$ 2,00 em caixa:
-          if (bestCandidate && bot.currentCapital >= 2.00) {
+          // Se achou uma oportunidade e o robô tem no mínimo R$ 2,00 em caixa (cooldown de 30s se falhar):
+          if (bestCandidate && bot.currentCapital >= 2.00 && (Date.now() - lastBuyAttempt > 30000)) {
+            lastBuyAttempt = Date.now();
             const { asset, rsi, price } = bestCandidate;
             const buyAmount = Number(Math.min(bot.currentCapital, 10.00).toFixed(2));
             console.log(`🎯 [OPORTUNIDADE DETECTADA EM ${asset.name}!] RSI: ${rsi.toFixed(1)} | Preço: R$ ${price} | Valor da Ordem: R$ ${buyAmount}`);
@@ -484,12 +486,27 @@ async function startMultiAssetTrader() {
             console.log(`[SCALPING ${pos.assetName}] Entrada: R$ ${pos.entryPrice.toFixed(2)} | Atual: R$ ${currentPrice.toFixed(2)} | PnL: ${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}% (R$ ${pnlBrl.toFixed(2)})`);
           }
 
-          // GATILHO DE SAÍDA: LUCRO ENTRE 1.0% E 1.5% (SCALP) OU PROTEÇÃO DE 0.9%
-          const hitTakeProfit = pnlPct >= ecosystemState.takeProfitMinPct;
-          const hitStopLoss = pnlPct <= -ecosystemState.stopLossPctPerTrade;
+          // 1. TRAILING PROFIT LOCK: Quando o trade bate +1.0%, ativa trava de lucro garantido em +0.40%
+          if (!pos.trailingLocked && pnlPct >= (ecosystemState.trailingTriggerPct || 1.0)) {
+            pos.trailingLocked = true;
+            pos.lockedMinProfitPct = ecosystemState.trailingLockPct || 0.40;
+            console.log(`🛡️ [TRAILING LOCK ATIVADO]: ${pos.assetName} bateu +${pnlPct.toFixed(2)}%! Lucro mínimo de +${pos.lockedMinProfitPct.toFixed(2)}% blindado no bolso!`);
+          }
 
-          if (hitTakeProfit || hitStopLoss) {
-            const reason = hitTakeProfit ? 'LUCRO SCALPING (1.0% a 1.5%)' : 'STOP LOSS PROTEGIDO';
+          // 2. GATILHOS DE SAÍDA:
+          // - Take Profit Pleno (1.2% a 1.5%)
+          // - Saída por Trailing Lock (se reverter para +0.40% após bater +1.0%)
+          // - Stop Loss de Proteção (-0.90% se o trailing não tiver sido ativado)
+          const hitTakeProfit = pnlPct >= (ecosystemState.takeProfitMinPct || 1.20);
+          const hitTrailingExit = pos.trailingLocked && pnlPct <= (pos.lockedMinProfitPct || 0.40);
+          const hitStopLoss = !pos.trailingLocked && (pnlPct <= -ecosystemState.stopLossPctPerTrade);
+
+          if (hitTakeProfit || hitTrailingExit || hitStopLoss) {
+            const reason = hitTakeProfit
+              ? `LUCRO MÁXIMO SCALPING (+${pnlPct.toFixed(2)}%)`
+              : hitTrailingExit
+              ? `LUCRO GARANTIDO TRAILING (+${pnlPct.toFixed(2)}%)`
+              : `STOP LOSS PROTEGIDO (${pnlPct.toFixed(2)}%)`;
             console.log(`🏁 [ENCERRANDO OPERAÇÃO]: ${reason} | Variação: ${pnlPct.toFixed(2)}% | R$ ${pnlBrl.toFixed(2)}`);
 
             const sellResult = await executeRealMarketOrder(pos.symbol, 'SELL', null, pos.qty, pos.decimals, pos.baseAsset);
