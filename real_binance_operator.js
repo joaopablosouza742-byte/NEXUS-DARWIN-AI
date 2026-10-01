@@ -50,6 +50,17 @@ const priceHistories = {
 // =============================================================================
 // 1. COMUNICAÇÃO BINANCE (ASSINADA VIA HMAC-SHA256)
 // =============================================================================
+function getCurrentPublicIp() {
+  return new Promise((resolve) => {
+    https.get('https://api.ipify.org?format=json', (res) => {
+      let d = ''; res.on('data', c => d += c);
+      res.on('end', () => {
+        try { resolve(JSON.parse(d).ip); } catch (e) { resolve('45.226.119.246'); }
+      });
+    }).on('error', () => resolve('45.226.119.246'));
+  });
+}
+
 function getBinanceServerTime() {
   return new Promise((resolve) => {
     https.get('https://api.binance.com/api/v3/time', (res) => {
@@ -136,10 +147,12 @@ async function getRealBalances() {
         else if (free > 0) result[b.asset] = free;
       });
       return result;
+    } else if (res.data && res.data.code) {
+      return { error: res.data.msg, code: res.data.code, brlFree: 0 };
     }
     return { brlFree: 0 };
   } catch (e) {
-    return { brlFree: 0 };
+    return { error: e.message, brlFree: 0 };
   }
 }
 
@@ -337,13 +350,25 @@ async function startMultiAssetTrader() {
   console.log('===================================================================');
   console.log(' 🚀 NEXUS DARWIN AI - MOTOR MULTI-CRIPTO 100% REAL (SCALPING)');
   console.log('===================================================================');
-  console.log('[MOEDAS ATIVAS]: Bitcoin (BTC), Solana (SOL), Ethereum (ETH), BNB');
-  console.log('[META POR TRADE]: 1.0% a 1.5% (Centavos compostos rumo a +R$ 10,00)');
-  console.log('[IP AUTORIZADO]: 45.226.119.62');
+  const currentIp = await getCurrentPublicIp();
+  console.log('[MOEDAS ATIVAS]: Bitcoin (BTC), Solana (SOL), Ethereum (ETH), BNB, USDC');
+  console.log('[META POR TRADE]: 1.2% a 1.5% c/ Trailing Lock (+0.4% garantido)');
+  console.log(`[IP PÚBLICO ATUAL DA MÁQUINA]: ${currentIp}`);
 
   // Verifica saldos reais iniciais
   const balances = await getRealBalances();
   console.log('[SALDOS REAIS ENCONTRADOS]:', balances);
+
+  if (balances.error && balances.code === -2015) {
+    console.log('\n===================================================================');
+    console.log('🚨 [AVISO DE AUTORIZAÇÃO DE IP NA BINANCE]:');
+    console.log(`O seu provedor de internet rotacionou o seu IP para: ${currentIp}`);
+    console.log('Para a Binance liberar as ordens, acesse a sua conta:');
+    console.log('1. Perfil > Gerenciamento de API');
+    console.log('2. Clique em "Editar Restrições" na sua chave API');
+    console.log(`3. Adicione este IP à lista de IPs confiáveis: ${currentIp}`);
+    console.log('===================================================================\n');
+  }
 
   const usdcPrice = (await getLivePrice('USDCBRL')) || 5.70;
   const usdcTotal = (balances.USDC || 0) + (balances.LDUSDC || 0);
