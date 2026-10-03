@@ -3,44 +3,42 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEXUS DARWIN CLOUD — Robôs R$ 10 -> +R$ 10 (Firebase + Binance + Bolsa EUA)</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>NEXUS DARWIN — Terminal Quantitativo Binance Real</title>
+  <link rel="stylesheet" href="styles.css?v=3.0.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Barra de Topo -->
+  <!-- Barra de Topo com Navegação entre Ambientes -->
   <header class="top-navbar">
     <div class="brand-area">
       <div class="brand-logo">NX</div>
       <div class="brand-title">
         <h1>
-          NEXUS DARWIN CLOUD
-          <span class="badge-live" id="engineStatusBadge">● OPERANDO AUTÔNOMO</span>
-          <span class="badge-live" id="firebaseStatusBadge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border-color: rgba(245, 158, 11, 0.4);">
-            ☁️ Firebase: Clique em Configurar
-          </span>
+          NEXUS DARWIN
+          <span class="badge-live" id="engineStatusBadge">● BINANCE REAL AO VIVO</span>
         </h1>
         <div class="brand-subtitle">
-          Regra <strong>R$ 10,00 ➔ Lucra +R$ 10,00 ➔ Multiplica Robô</strong> • Binance Cripto & Bolsa Americana (Alpaca) • Banco Firebase Firestore
+          Motor Quantitativo Multi-Cripto • Gestão Lean Swarm (Regra 3x) • Trailing Lock Anti-Ruína
         </div>
       </div>
     </div>
 
-    <!-- Relógio do Ciclo Diário -->
-    <div class="day-cycle-widget">
-      <div class="day-label" id="currentDayLabel">DIA #1</div>
-      <div class="day-progress-wrapper">
-        <div class="day-progress-header">
-          <span>Ciclo Diário (Meta: +R$ 10/robô)</span>
-          <span id="dayProgressText">0%</span>
-        </div>
-        <div class="day-progress-bar">
-          <div class="day-progress-fill" id="dayProgressFill" style="width: 0%;"></div>
-        </div>
-      </div>
-    </div>
+    <!-- Seletor de Ambiente: Binance Real vs Bolsa Americana Demo -->
+    <nav class="nav-switcher-bar" aria-label="Ambientes de Operação">
+      <a href="index.html" class="nav-tab-link active-real" title="Operação com Dinheiro Real na Binance">
+        <span class="pulse-dot pulse-green"></span>
+        <span>Binance Cripto (Real)</span>
+      </a>
+      <a href="alpaca.html" class="nav-tab-link" title="Simulador Demo Paper Trading na Bolsa Americana">
+        <span class="pulse-dot pulse-blue"></span>
+        <span>Bolsa Americana (Demo $100k)</span>
+      </a>
+    </nav>
 
-    <!-- Ações Rápidas -->
+    <!-- Status de Rede & Ações Rápidas -->
     <div class="controls-group">
       <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.12); padding: 0.4rem 0.85rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.78rem;">
         <span style="color: #10b981; font-weight: 700;">🟢 PC CONECTADO</span>
@@ -48,347 +46,249 @@
       </div>
 
       <button class="btn btn-primary" id="btnRefreshRealState" onclick="location.reload()" title="Atualizar dados em tempo real">
-        🔄 Atualizar Dados Agora
+        🔄 Atualizar
       </button>
     </div>
   </header>
 
-  <!-- Faixa de Cotações Ao Vivo (Binance Cripto + Bolsa Americana Wall Street) -->
+  <!-- Faixa de Cotações Ao Vivo da Binance -->
   <div class="market-ticker-strip" id="marketTickerStrip">
     <!-- Preenchido dinamicamente pelo app.js -->
   </div>
 
-  <!-- Conteúdo Principal -->
   <main class="dashboard-container">
 
-    <!-- 4 KPIs Mestres (Onde ficam os fundos guardados + Enxame R$ 10) -->
+    <!-- Banner Informativo do Ambiente -->
+    <div class="environment-banner env-real">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span style="font-size: 1.1rem;">🛡️</span>
+        <span><strong>CONTA REAL ATIVA:</strong> Operando na Binance Brasil com execução fracionária Convert com <strong>zero taxa de corretagem</strong>.</span>
+      </div>
+      <div style="font-size: 0.76rem; color: #a7f3d0;">
+        UID Binance: <strong>1281981508</strong> • Conexão REST/WebSocket 100% Liberada
+      </div>
+    </div>
+
+    <!-- 4 CARDS DE PATRIMÔNIO REAL (SEM DADOS FICTÍCIOS) -->
     <section class="kpi-grid">
-      <!-- 1. Carteira Cofre Blindada (Binance Funding + Alpaca EUA) -->
+      <!-- 1. Patrimônio Total Real -->
       <div class="kpi-card vault-highlight">
         <div class="kpi-header">
-          <span>🔒 Cofre Total Salvo (Lucro Intocável)</span>
-          <span class="text-emerald">100% PROTEGIDO</span>
+          <span>💼 Patrimônio Total na Conta</span>
+          <span class="text-emerald" style="font-weight: 700;">100% REAL</span>
         </div>
-        <div class="kpi-value text-emerald" id="kpiVaultBalance">R$ 0,00</div>
+        <div class="kpi-value text-emerald" id="realTotalBalanceBrl">R$ 14,60</div>
         <div class="kpi-sub" style="display: flex; justify-content: space-between; font-size: 0.74rem; margin-top: 0.25rem;">
-          <span>🟡 Binance Funding: <strong id="kpiBinanceVault" class="text-amber">R$ 0,00</strong></span>
-          <span>🔵 Bolsa EUA (Alpaca): <strong id="kpiAlpacaVault" class="text-cyan">R$ 0,00</strong></span>
+          <span>Soma Spot + Cripto + Simple Earn</span>
+          <span style="color: #10b981;">● Sincronizado</span>
         </div>
       </div>
 
-      <!-- 2. Capital em Operação nos Robôs (R$ 10 por robô) -->
+      <!-- 2. Reais Livres p/ Compras -->
       <div class="kpi-card">
         <div class="kpi-header">
-          <span>⚡ Capital Operando Agora (R$ 10 / Robô)</span>
-          <span class="text-cyan" id="kpiActiveDailyPnL">+R$ 0,00 no ciclo</span>
+          <span>💵 Saldo Livre em Reais (BRL)</span>
+          <span class="text-cyan">PRONTO P/ OPERAR</span>
         </div>
-        <div class="kpi-value" id="kpiActiveCapital">R$ 10,00</div>
+        <div class="kpi-value text-cyan" id="realFreeBrl">R$ 0,01</div>
         <div class="kpi-sub">
-          <span>Banca por Robô: <strong id="kpiBaseSeed">R$ 10,00</strong> • Meta p/ Clonar: <strong class="text-emerald" id="kpiTargetProfit">+R$ 10,00</strong></span>
+          <span>Capital desimpedido para novas entradas</span>
         </div>
       </div>
 
-      <!-- 3. Multiplicação do Exército de Robôs -->
+      <!-- 3. Cripto em Posição Ativa -->
       <div class="kpi-card">
         <div class="kpi-header">
-          <span>🤖 Multiplicação de Robôs (10 ➔ +10)</span>
-          <span class="text-purple" id="kpiMaxGeneration">Geração Máx: Gen #1</span>
+          <span>🪙 Cripto em Scalping (Ao Vivo)</span>
+          <span class="text-amber" id="posHeaderBadge">POSIÇÃO ATIVA</span>
         </div>
-        <div class="kpi-value text-cyan" id="kpiActiveBotsCount">1 Robô Vivo</div>
+        <div class="kpi-value text-amber" id="realCryptoHeldBrl">R$ 5,03</div>
         <div class="kpi-sub">
-          <span id="kpiDeadBotsCount">0 robôs eliminados (Risco máx R$ 10/robô)</span>
+          <span id="realCryptoHeldDetails">0.001248 BNB monitorado</span>
         </div>
       </div>
 
-      <!-- 4. Inteligência Neural & Aprendizado -->
+      <!-- 4. Cofre Blindado em Dólar Digital -->
       <div class="kpi-card hive-highlight">
         <div class="kpi-header">
-          <span>🧠 Inteligência da Colmeia (IA Evolutiva)</span>
-          <span class="text-purple" id="kpiWinRate">Win Rate: --%</span>
+          <span>🔒 Cofre Dólar (USDC no Earn)</span>
+          <span class="text-purple">RENDENDO JUROS</span>
         </div>
-        <div class="kpi-value text-purple" id="kpiCollectiveIQ">QI 108</div>
+        <div class="kpi-value text-purple" id="realUsdcBrl">1.824 USDC</div>
         <div class="kpi-sub">
-          <span id="kpiLessonsCount">0 ajustes neurais • Sincronizado c/ Cloud Firestore</span>
+          <span>~R$ 9,56 blindados fora do risco de trade</span>
         </div>
       </div>
     </section>
 
-    <!-- Grid Principal -->
+    <!-- CARD HERO: MONITOR DE SCALPING AO VIVO DO ROBÔ -->
+    <section class="position-hero-card" id="activePositionCard" style="margin-bottom: 1.35rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+        <div>
+          <div style="font-size: 0.72rem; color: #10b981; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">
+            ● ROBÔ #1 (ALPHA MULTI) — MONITOR DE POSIÇÃO AO VIVO
+          </div>
+          <div style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; margin-top: 0.2rem;" id="activeAssetTitle">
+            <span>BNB / BRL</span>
+            <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">COMPRA SPOT (LONG)</span>
+          </div>
+        </div>
+
+        <div style="text-align: right;">
+          <div style="font-size: 0.72rem; color: var(--text-muted);">LUCRO / PREJUÍZO (PnL AO VIVO)</div>
+          <div style="font-size: 1.4rem; font-weight: 800;" id="activeLivePnL">+0.00% (R$ 0,00)</div>
+        </div>
+      </div>
+
+      <!-- Grid de Métricas da Posição -->
+      <div class="position-stats-grid">
+        <div class="pos-stat-box">
+          <div class="pos-stat-label">Preço de Entrada</div>
+          <div class="pos-stat-value text-cyan" id="posEntryPrice">R$ 4.028,00</div>
+        </div>
+        <div class="pos-stat-box">
+          <div class="pos-stat-label">Preço Atual Binance</div>
+          <div class="pos-stat-value" id="posCurrentPrice" style="color: #f8fafc;">R$ 4.028,00</div>
+        </div>
+        <div class="pos-stat-box">
+          <div class="pos-stat-label">Trailing Profit Lock</div>
+          <div class="pos-stat-value text-emerald" id="posTrailingLock">+1.00% (Trava +0.40%)</div>
+        </div>
+        <div class="pos-stat-box">
+          <div class="pos-stat-label">Alvo de Saída (Take Profit)</div>
+          <div class="pos-stat-value text-purple" id="posTakeProfit">+1.20% a +1.50%</div>
+        </div>
+        <div class="pos-stat-box">
+          <div class="pos-stat-label">Stop Loss Cirúrgico</div>
+          <div class="pos-stat-value text-red" id="posStopLoss">-0.90%</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRID DE TRABALHO: GRÁFICO + PAINEL DE ESCALA LEAN SWARM -->
     <div class="main-workspace-grid">
 
-      <!-- Coluna Esquerda -->
+      <!-- Coluna Esquerda: Gráfico TradingView Oficial -->
       <div style="display: flex; flex-direction: column; gap: 1.35rem;">
-
-        <!-- DETALHAMENTO REAL DA CONTA BINANCE -->
-        <section class="section-panel" style="border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.03);">
-          <div class="section-header">
-            <div class="section-title">
-              <span>💼 Saldo Real Detalhado na Binance (Spot & Ativos)</span>
-              <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">UID: 1281981508</span>
-            </div>
-            <div style="font-size: 0.76rem; color: var(--text-secondary);">
-              Valores reais consultados diretamente da sua conta Binance via API
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.85rem; margin-top: 0.6rem;">
-            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-              <div style="font-size: 0.72rem; color: var(--text-muted);">SALDO TOTAL DA CONTA</div>
-              <div style="font-size: 1.15rem; font-weight: 700; color: #10b981;" id="realTotalBalanceBrl">R$ 10,00</div>
-              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">Patrimônio Total Spot</div>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-              <div style="font-size: 0.72rem; color: var(--text-muted);">REAIS LIVRES (BRL)</div>
-              <div style="font-size: 1.15rem; font-weight: 700; color: #38bdf8;" id="realFreeBrl">R$ 1,18</div>
-              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">Pronto para comprar</div>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-              <div style="font-size: 0.72rem; color: var(--text-muted);">EM BITCOIN (BTC)</div>
-              <div style="font-size: 1.15rem; font-weight: 700; color: #f59e0b;" id="realBtcBrl">R$ 8,82</div>
-              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">0.00001998 BTC comprado</div>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-              <div style="font-size: 0.72rem; color: var(--text-muted);">EM DÓLAR (USDC / EARN)</div>
-              <div style="font-size: 1.15rem; font-weight: 700; color: #22c55e;" id="realUsdcBrl">0.822 USDC</div>
-              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">~R$ 4,70 em rendimento</div>
-            </div>
-
-            <div style="background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
-              <div style="font-size: 0.72rem; color: var(--text-muted);">LUCRO GUARDADO NO COFRE</div>
-              <div style="font-size: 1.15rem; font-weight: 700; color: #a855f7;" id="realVaultBrl">R$ 0,00</div>
-              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem;">Carteira Funding protegida</div>
-            </div>
-          </div>
-        </section>
-
-        <!-- GRÁFICO EM TEMPO REAL DOS ATIVOS MONITÓRIADOS -->
         <section class="section-panel">
           <div class="section-header">
             <div class="section-title">
-              <span>📈 Gráfico em Tempo Real dos Ativos Planejados</span>
+              <span>📈 Gráfico em Tempo Real dos Ativos do Radar</span>
             </div>
             <div style="font-size: 0.76rem; color: var(--text-secondary);">
-              Selecione a moeda abaixo para visualizar o candle e a tendência oficial da Binance
+              Cotação ao vivo dos pares líquidos em Reais na Binance
             </div>
           </div>
 
-          <!-- Botões de Troca de Ativo -->
-          <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem; flex-wrap: wrap;" id="assetChartTabs">
-            <button class="btn btn-primary" onclick="switchChart('BINANCE:BTCBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
-              🟡 BTC
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:SOLBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
-              🟣 SOL
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:ETHBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
-              🔵 ETH
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:BNBBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+          <!-- Tabs de Moedas -->
+          <div style="display: flex; gap: 0.45rem; margin-bottom: 0.85rem; flex-wrap: wrap;" id="assetChartTabs">
+            <button class="btn btn-primary" onclick="switchChart('BINANCE:BNBBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
               🟠 BNB
             </button>
-            <button class="btn" onclick="switchChart('BINANCE:XRPBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+            <button class="btn" onclick="switchChart('BINANCE:BTCBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🟡 BTC
+            </button>
+            <button class="btn" onclick="switchChart('BINANCE:SOLBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🟣 SOL
+            </button>
+            <button class="btn" onclick="switchChart('BINANCE:ETHBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🔵 ETH
+            </button>
+            <button class="btn" onclick="switchChart('BINANCE:XRPBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
               ⚪ XRP
             </button>
-            <button class="btn" onclick="switchChart('BINANCE:DOGEBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+            <button class="btn" onclick="switchChart('BINANCE:DOGEBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
               🐶 DOGE
             </button>
-            <button class="btn" onclick="switchChart('BINANCE:LINKBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
-              🔗 LINK
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:SUIBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+            <button class="btn" onclick="switchChart('BINANCE:SUIBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
               💧 SUI
             </button>
-            <button class="btn" onclick="switchChart('BINANCE:USDCBRL', this)" style="padding: 0.4rem 0.85rem; font-size: 0.78rem;">
+            <button class="btn" onclick="switchChart('BINANCE:USDCBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
               💵 USDC
             </button>
           </div>
 
-          <!-- Container do Gráfico TradingView Oficial -->
+          <!-- Iframe TradingView Oficial -->
           <div id="tradingview_chart_container" style="height: 380px; width: 100%; border-radius: 8px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255,255,255,0.08);">
-            <iframe id="tv_iframe" src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE%3ABTCBRL&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=0b0e14&studies=%5B%5D&theme=dark&style=1&timezone=America%2FSao_Paulo&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=br" style="width: 100%; height: 100%; border: none;"></iframe>
+            <iframe id="tv_iframe" src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE%3ABNBBRL&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=0b0e14&studies=%5B%5D&theme=dark&style=1&timezone=America%2FSao_Paulo&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=br" style="width: 100%; height: 100%; border: none;"></iframe>
           </div>
         </section>
 
-        <!-- Painel de Robôs Vivos -->
+        <!-- Feed de Ordens Executadas -->
         <section class="section-panel">
           <div class="section-header">
             <div class="section-title">
-              <span>🧬 Exército de Robôs Operadores (Banca R$ 10,00 ➔ Meta +R$ 10,00)</span>
+              <span>⚡ Feed de Ordens Reais da Binance</span>
             </div>
             <div style="font-size: 0.76rem; color: var(--text-secondary);">
-              <strong class="text-emerald">Lucrou +R$ 10,00 = Guarda no Cofre (Binance Funding) + Cria Novo Robô de R$ 10,00</strong>
+              Histórico das compras e vendas executadas com ID real da Binance
             </div>
           </div>
 
-          <div class="bots-swarm-grid" id="activeBotsGrid">
-            <!-- Cards dos robôs renderizados em tempo real -->
+          <div class="trades-feed-list" id="liveTradesFeed">
+            <!-- Preenchido pelo app.js -->
+          </div>
+        </section>
+      </div>
+
+      <!-- Coluna Direita: Métricas de Escala Lean Swarm & Cérebro IA -->
+      <div style="display: flex; flex-direction: column; gap: 1.35rem;">
+
+        <!-- Painel Lean Swarm: Regra dos 3x & Divisão 80/20 -->
+        <section class="section-panel" style="border: 1px solid rgba(56, 189, 248, 0.3);">
+          <div class="section-header">
+            <div class="section-title">
+              <span>🧬 Plano Mestre Lean Swarm (Regra 3x)</span>
+            </div>
+            <span class="badge-live" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">1 / 6 ROBÔS</span>
+          </div>
+
+          <div style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+            Meta: Acumular <strong>3x a banca inicial (R$ 30,00)</strong> em lucros somados para desbloquear o Robô #2 e guardar 20% no Cofre Blindado.
+          </div>
+
+          <div class="clone-progress-box">
+            <div class="clone-progress-label">
+              <span>Progresso para Desbloqueio (R$ 30,00)</span>
+              <span id="swarmProgressPct">0%</span>
+            </div>
+            <div class="clone-progress-bar">
+              <div class="clone-progress-fill" id="swarmProgressFill" style="width: 5%;"></div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-top: 0.9rem;">
+            <div style="background: rgba(255,255,255,0.02); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+              <div style="font-size: 0.68rem; color: var(--text-muted);">DIVISÃO DE LUCRO</div>
+              <div style="font-size: 0.9rem; font-weight: 700; color: #10b981;">80% Reinveste / 20% Cofre</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.02); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+              <div style="font-size: 0.68rem; color: var(--text-muted);">CIRCUIT BREAKER</div>
+              <div style="font-size: 0.9rem; font-weight: 700; color: #38bdf8;" id="circuitBreakerStatus">🟢 Proteção Normal</div>
+            </div>
           </div>
         </section>
 
-        <!-- Livro Diário da Carteira Cofre (Binance Funding + Bolsa Americana) -->
+        <!-- Insights e Decisões da IA em Tempo Real -->
         <section class="section-panel">
           <div class="section-header">
             <div class="section-title">
-              <span>🏦 Extrato dos Cofres (Binance Funding Wallet & Bolsa Americana Alpaca)</span>
-            </div>
-            <div style="font-size: 0.76rem; color: var(--text-secondary);">
-              Onde ficam guardados seus lucros diários fora de risco operacional
+              <span>🧠 Radar da IA & Insights Recentes</span>
             </div>
           </div>
-
-          <div style="overflow-x: auto;">
-            <table class="ledger-table">
-              <thead>
-                <tr>
-                  <th>Dia</th>
-                  <th>Horário</th>
-                  <th>Lucro Guardado</th>
-                  <th>🟡 Cofre Binance (Funding)</th>
-                  <th>🔵 Cofre Bolsa EUA (Alpaca)</th>
-                  <th>Total Blindado</th>
-                  <th>Novos Robôs (+R$ 10)</th>
-                  <th>Mortos (💀)</th>
-                </tr>
-              </thead>
-              <tbody id="dailyLedgerBody">
-                <tr>
-                  <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.2rem;">
-                    Operando Ciclo #1 (R$ 10,00 buscando +R$ 10,00)... Clique em "⏭️ Bater Meta +R$ 10 & Multiplicar Agora" para ver a multiplicação imediata!
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div id="hiveInsightsList" style="display: flex; flex-direction: column; gap: 0.45rem; font-size: 0.78rem;">
+            <!-- Preenchido pelo app.js -->
           </div>
         </section>
 
       </div>
-
-      <!-- Coluna Direita: Memória da Colmeia, Feed de Trades e Cemitério -->
-      <aside style="display: flex; flex-direction: column; gap: 1.35rem;">
-
-        <!-- Pesos Globais da Rede Neural da Colmeia -->
-        <section class="section-panel">
-          <div class="section-header">
-            <div class="section-title">
-              <span>🧠 DNA Neural Mestre (Firebase IA)</span>
-            </div>
-            <span class="iq-badge" id="hiveRankBadge">Aprendiz Autônomo</span>
-          </div>
-          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.8rem;">
-            A cada trade na Binance ou NYSE/NASDAQ, os robôs aprendem por reforço e passam um cérebro mais especialista para os novos filhos de R$ 10,00:
-          </p>
-          <div id="hiveWeightsContainer" style="display: flex; flex-direction: column; gap: 0.55rem; margin-bottom: 1rem;">
-          </div>
-          <div style="border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
-            <div style="font-size: 0.74rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.4rem;">
-              LOG DE MULTIPLICAÇÃO & APRENDIZADO:
-            </div>
-            <div id="hiveInsightsList" style="font-size: 0.74rem; color: var(--text-secondary); display: flex; flex-direction: column; gap: 0.35rem;">
-            </div>
-          </div>
-        </section>
-
-        <!-- Feed de Compras e Vendas Ao Vivo -->
-        <section class="section-panel">
-          <div class="section-header">
-            <div class="section-title">
-              <span>⚡ Ordens Executadas (Binance & Wall Street)</span>
-            </div>
-          </div>
-          <div class="feed-list" id="liveTradesFeed">
-          </div>
-        </section>
-
-        <!-- Cemitério de Robôs Eliminados -->
-        <section class="section-panel">
-          <div class="section-header">
-            <div class="section-title">
-              <span>💀 Robôs Eliminados (Saldo Negativo)</span>
-            </div>
-          </div>
-          <div class="feed-list" id="deadBotsFeed" style="max-height: 240px;">
-          </div>
-        </section>
-
-      </aside>
     </div>
-
   </main>
 
-  <!-- MODAL 1: CONFIGURAÇÃO FIREBASE, BINANCE, BOLSA AMERICANA E BANCA R$ 10 -->
-  <dialog id="configDialog" closedby="any" aria-labelledby="configDialogTitle">
-    <div class="dialog-inner">
-      <div class="dialog-header">
-        <h2 id="configDialogTitle" style="font-size: 1.08rem;">🔥 Configurar Firebase Firestore, Binance, Bolsa EUA & Regra R$ 10</h2>
-        <button type="button" class="btn" id="btnCloseConfigDialog">✕</button>
-      </div>
+  <footer style="text-align: center; padding: 1.5rem; font-size: 0.74rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); margin-top: 2rem;">
+    NEXUS DARWIN AI QUANTITATIVO • Sistema Autônomo Binance Brasil & Sincronização Firebase Realtime Database
+  </footer>
 
-      <form id="configForm">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
-          <div class="form-group">
-            <label for="inputSeedCapital">Saldo Inicial de Cada Robô (R$)</label>
-            <input type="number" id="inputSeedCapital" class="form-control" min="1" step="1" value="10" required />
-          </div>
-          <div class="form-group">
-            <label for="inputTargetProfit">Meta de Lucro p/ Multiplicar Robô (+R$)</label>
-            <input type="number" id="inputTargetProfit" class="form-control" min="1" step="1" value="10" required />
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="inputFirebaseConfig">🔥 Firebase Config JSON (Cole o objeto firebaseConfig do seu Console Firebase)</label>
-          <textarea id="inputFirebaseConfig" class="form-control" rows="3" placeholder='{"apiKey": "...", "authDomain": "...", "projectId": "seu-projeto", "appId": "..."}'></textarea>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
-          <div class="form-group">
-            <label for="inputBinanceKey">🟡 Binance API Key (Spot + Transferência p/ Funding Cofre)</label>
-            <input type="password" id="inputBinanceKey" class="form-control" placeholder="Binance API Key..." />
-          </div>
-          <div class="form-group">
-            <label for="inputBinanceSecret">🟡 Binance API Secret</label>
-            <input type="password" id="inputBinanceSecret" class="form-control" placeholder="Binance Secret Key..." />
-          </div>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem;">
-          <div class="form-group">
-            <label for="inputAlpacaKey">🔵 Bolsa Americana (Alpaca Markets API Key)</label>
-            <input type="password" id="inputAlpacaKey" class="form-control" placeholder="PK..." />
-          </div>
-          <div class="form-group">
-            <label for="inputAlpacaSecret">🔵 Alpaca API Secret (NYSE / NASDAQ)</label>
-            <input type="password" id="inputAlpacaSecret" class="form-control" placeholder="Alpaca Secret..." />
-          </div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between; gap: 0.75rem; margin-top: 1.15rem; flex-wrap: wrap;">
-          <button type="button" class="btn" id="btnResetEcosystem" style="border-color: var(--accent-red); color: var(--accent-red);">
-            🔄 Reiniciar no Dia #1 (1 Robô com R$ 10,00)
-          </button>
-          <button type="submit" class="btn btn-primary">
-            ☁️ Salvar e Sincronizar com Firebase
-          </button>
-        </div>
-      </form>
-    </div>
-  </dialog>
-
-  <!-- MODAL 2: INSPEÇÃO DO CÉREBRO NEURAL DO ROBÔ -->
-  <dialog id="botBrainDialog" closedby="any" aria-labelledby="botBrainDialogTitle">
-    <div class="dialog-inner">
-      <div class="dialog-header">
-        <h2 id="botBrainDialogTitle" style="font-size: 1.1rem;">🧬 Inspeção Neural do Robô</h2>
-        <button type="button" class="btn" id="btnCloseBrainDialog">✕</button>
-      </div>
-      <div id="botBrainDialogContent">
-      </div>
-    </div>
-  </dialog>
-
-  <script src="app.js?v=2.0.0"></script>
+  <script src="app.js?v=3.0.0"></script>
 </body>
 </html>

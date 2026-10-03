@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEXUS WALL STREET — Simulador Alpaca Paper Trading (Demo)</title>
+  <link rel="stylesheet" href="styles.css?v=3.0.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Barra de Topo com Navegação entre Ambientes -->
+  <header class="top-navbar">
+    <div class="brand-area">
+      <div class="brand-logo" style="background: linear-gradient(135deg, #0284c7, #38bdf8);">US</div>
+      <div class="brand-title">
+        <h1>
+          NEXUS WALL STREET
+          <span class="badge-live" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
+            ● SIMULADOR DEMO PAPER ($100K)
+          </span>
+        </h1>
+        <div class="brand-subtitle">
+          Bolsa Americana (NYSE / NASDAQ) • Ações Fracionadas • Ambiente Isolado da Binance Real
+        </div>
+      </div>
+    </div>
+
+    <!-- Seletor de Ambiente: Binance Real vs Bolsa Americana Demo -->
+    <nav class="nav-switcher-bar" aria-label="Ambientes de Operação">
+      <a href="index.html" class="nav-tab-link" title="Voltar para a Operação Real na Binance">
+        <span class="pulse-dot pulse-green"></span>
+        <span>Binance Cripto (Real)</span>
+      </a>
+      <a href="alpaca.html" class="nav-tab-link active-demo" title="Você está no Simulador Demo de Ações Americanas">
+        <span class="pulse-dot pulse-blue"></span>
+        <span>Bolsa Americana (Demo $100k)</span>
+      </a>
+    </nav>
+
+    <!-- Status do Pregão de Wall Street -->
+    <div class="controls-group">
+      <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(56, 189, 248, 0.12); padding: 0.4rem 0.85rem; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.35); font-size: 0.78rem;">
+        <span id="marketStatusDot" class="pulse-dot pulse-blue"></span>
+        <span id="marketStatusText" style="color: #38bdf8; font-weight: 700;">WALL STREET: VERIFICANDO...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Faixa de Cotações de Wall Street -->
+  <div class="market-ticker-strip" id="usMarketTickerStrip">
+    <div class="ticker-pill"><span class="ticker-tag tag-bolsa">NYSE/NASDAQ</span><strong>AAPL (Apple)</strong><span style="color: #38bdf8; font-weight: 700;">$ 228.40</span></div>
+    <div class="ticker-pill"><span class="ticker-tag tag-bolsa">NYSE/NASDAQ</span><strong>TSLA (Tesla)</strong><span style="color: #38bdf8; font-weight: 700;">$ 254.20</span></div>
+    <div class="ticker-pill"><span class="ticker-tag tag-bolsa">NYSE/NASDAQ</span><strong>NVDA (Nvidia)</strong><span style="color: #38bdf8; font-weight: 700;">$ 121.80</span></div>
+    <div class="ticker-pill"><span class="ticker-tag tag-bolsa">NYSE/NASDAQ</span><strong>MSFT (Microsoft)</strong><span style="color: #38bdf8; font-weight: 700;">$ 428.15</span></div>
+    <div class="ticker-pill"><span class="ticker-tag tag-bolsa">NYSE/NASDAQ</span><strong>SPY (S&P 500)</strong><span style="color: #38bdf8; font-weight: 700;">$ 572.90</span></div>
+  </div>
+
+  <main class="dashboard-container">
+
+    <!-- Banner de Isolamento e Segurança -->
+    <div class="environment-banner env-demo">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span style="font-size: 1.1rem;">🛡️</span>
+        <span><strong>AMBIENTE DE SIMULAÇÃO ISOLADO:</strong> As operações nesta página são 100% virtuais via <strong>Alpaca Paper Trading</strong>. O seu dinheiro real na Binance está intocável e separado.</span>
+      </div>
+      <div style="font-size: 0.76rem; color: #bae6fd;">
+        Banca Demo: <strong>$ 100.000,00 USD</strong> virtuais para testes de estratégias
+      </div>
+    </div>
+
+    <!-- 4 KPIS DA CONTA DEMO ALPACA -->
+    <section class="kpi-grid">
+      <div class="kpi-card" style="border-color: rgba(56, 189, 248, 0.4);">
+        <div class="kpi-header">
+          <span>💵 Saldo Virtual da Conta Demo</span>
+          <span class="text-cyan">PAPER TRADING</span>
+        </div>
+        <div class="kpi-value text-cyan" id="alpacaDemoEquity">$ 100.000,00</div>
+        <div class="kpi-sub">
+          <span>Capital fictício para simulação</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>⚡ Poder de Compra (Buying Power)</span>
+          <span class="text-emerald">2X MARGEM DEMO</span>
+        </div>
+        <div class="kpi-value text-emerald" id="alpacaBuyingPower">$ 200.000,00</div>
+        <div class="kpi-sub">
+          <span>Capacidade simulada de ordens</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>📈 Lucro / Prejuízo Simulado</span>
+          <span class="text-purple">DEMO PnL</span>
+        </div>
+        <div class="kpi-value text-purple" id="alpacaDemoPnL">+$ 0,00 (0.00%)</div>
+        <div class="kpi-sub">
+          <span id="alpacaTradesCount">0 ordens simuladas executadas</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-header">
+          <span>🕒 Horário do Pregão (Wall Street)</span>
+          <span class="text-amber">NYSE & NASDAQ</span>
+        </div>
+        <div class="kpi-value text-amber" id="alpacaMarketClock">10:30 às 17:00</div>
+        <div class="kpi-sub">
+          <span>Horário oficial de Brasília (Seg a Sex)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- GRID DE TRABALHO: GRÁFICO DE AÇÕES + SIMULADOR DE ORDENS FRACIONADAS -->
+    <div class="main-workspace-grid">
+
+      <!-- Coluna Esquerda: Gráfico TradingView Oficial de Ações Americanas -->
+      <div style="display: flex; flex-direction: column; gap: 1.35rem;">
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <span>📈 Gráficos Oficiais de Wall Street (NYSE / NASDAQ)</span>
+            </div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">
+              Selecione o ativo abaixo para analisar os candles das maiores empresas dos EUA
+            </div>
+          </div>
+
+          <!-- Tabs de Ações -->
+          <div style="display: flex; gap: 0.45rem; margin-bottom: 0.85rem; flex-wrap: wrap;" id="usAssetTabs">
+            <button class="btn btn-primary" onclick="switchUSChart('NASDAQ:AAPL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🍎 AAPL (Apple)
+            </button>
+            <button class="btn" onclick="switchUSChart('NASDAQ:TSLA', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🚗 TSLA (Tesla)
+            </button>
+            <button class="btn" onclick="switchUSChart('NASDAQ:NVDA', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🤖 NVDA (Nvidia)
+            </button>
+            <button class="btn" onclick="switchUSChart('NASDAQ:MSFT', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              💻 MSFT (Microsoft)
+            </button>
+            <button class="btn" onclick="switchUSChart('AMEX:SPY', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🇺🇸 SPY (S&P 500)
+            </button>
+            <button class="btn" onclick="switchUSChart('NASDAQ:AMZN', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              📦 AMZN (Amazon)
+            </button>
+          </div>
+
+          <!-- Container do Gráfico TradingView -->
+          <div id="tradingview_chart_container" style="height: 400px; width: 100%; border-radius: 8px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255,255,255,0.08);">
+            <iframe id="us_tv_iframe" src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=NASDAQ%3AAAPL&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=0b0e14&studies=%5B%5D&theme=dark&style=1&timezone=America%2FNew_York&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=br" style="width: 100%; height: 100%; border: none;"></iframe>
+          </div>
+        </section>
+
+        <!-- Histórico de Ordens Simuladas da Alpaca -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <span>📋 Extrato de Operações Simuladas (Paper Trading)</span>
+            </div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">
+              Histórico isolado de compras e vendas na Bolsa Americana
+            </div>
+          </div>
+
+          <div class="trades-feed-list" id="alpacaOrdersFeed">
+            <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+              Nenhuma ordem simulada enviada ainda. Use o painel ao lado para testar uma compra fracionada.
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Coluna Direita: Painel de Controle de Ordens Simuladas & Chaves Alpaca -->
+      <div style="display: flex; flex-direction: column; gap: 1.35rem;">
+
+        <!-- Formulário de Teste de Ordens Fracionadas -->
+        <section class="section-panel" style="border: 1px solid rgba(56, 189, 248, 0.4);">
+          <div class="section-header">
+            <div class="section-title">
+              <span>🚀 Testar Ordem Fracionária Demo</span>
+            </div>
+            <span class="badge-live" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">SEM RISCO</span>
+          </div>
+
+          <form id="alpacaOrderForm">
+            <div class="form-group">
+              <label for="selectStock">Ação Americana</label>
+              <select id="selectStock" class="form-control">
+                <option value="AAPL">Apple Inc. (AAPL)</option>
+                <option value="TSLA">Tesla, Inc. (TSLA)</option>
+                <option value="NVDA">NVIDIA Corp. (NVDA)</option>
+                <option value="MSFT">Microsoft Corp. (MSFT)</option>
+                <option value="SPY">SPDR S&P 500 ETF (SPY)</option>
+                <option value="AMZN">Amazon.com, Inc. (AMZN)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="selectOrderSide">Tipo de Operação</label>
+              <select id="selectOrderSide" class="form-control">
+                <option value="buy">🟢 Comprar (Entrada)</option>
+                <option value="sell">🔴 Vender (Saída)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="inputNotionalAmount">Valor da Compra Fracionada ($ USD)</label>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="number" id="inputNotionalAmount" class="form-control" min="1" step="1" value="10" required />
+              </div>
+              <div style="display: flex; gap: 0.35rem; margin-top: 0.4rem;">
+                <button type="button" class="btn" onclick="document.getElementById('inputNotionalAmount').value = 5" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">$5</button>
+                <button type="button" class="btn" onclick="document.getElementById('inputNotionalAmount').value = 10" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">$10</button>
+                <button type="button" class="btn" onclick="document.getElementById('inputNotionalAmount').value = 50" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">$50</button>
+                <button type="button" class="btn" onclick="document.getElementById('inputNotionalAmount').value = 100" style="padding: 0.2rem 0.5rem; font-size: 0.72rem;">$100</button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem; background: linear-gradient(135deg, #0284c7, #38bdf8); color: #02111e; font-weight: 700; margin-top: 0.5rem;">
+              ⚡ Executar Ordem Simulada na Alpaca
+            </button>
+          </form>
+        </section>
+
+        <!-- Configuração Opcional de API Key da Alpaca (Salva apenas no seu navegador) -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <span>🔑 Chaves de API Alpaca Paper (Opcional)</span>
+            </div>
+          </div>
+
+          <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+            Se você já gerou suas chaves de Paper Trading em <strong>alpaca.markets</strong>, pode colocá-las aqui para consultar seu saldo real do simulador. Fica gravado apenas no seu próprio navegador.
+          </div>
+
+          <form id="alpacaKeyForm">
+            <div class="form-group">
+              <label for="alpacaPaperKey">Alpaca Paper Key ID (PK...)</label>
+              <input type="password" id="alpacaPaperKey" class="form-control" placeholder="PK..." />
+            </div>
+            <div class="form-group">
+              <label for="alpacaPaperSecret">Alpaca Paper Secret Key</label>
+              <input type="password" id="alpacaPaperSecret" class="form-control" placeholder="Secret Key..." />
+            </div>
+            <button type="submit" class="btn btn-cyan" style="width: 100%; justify-content: center;">
+              💾 Salvar Chaves Demo no Navegador
+            </button>
+          </form>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <footer style="text-align: center; padding: 1.5rem; font-size: 0.74rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); margin-top: 2rem;">
+    NEXUS WALL STREET • Simulador Demo Alpaca Markets • 100% Isolado da Operação Binance Real
+  </footer>
+
+  <script src="alpaca.js?v=1.0.0"></script>
+</body>
+</html>
