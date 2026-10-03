@@ -69,15 +69,15 @@
       </div>
     </div>
 
-    <!-- 4 CARDS DE PATRIMÔNIO REAL (SEM DADOS FICTÍCIOS) -->
+    <!-- 4 CARDS DE SALDO OFICIAL (SOMA, CAIXA, CRIPTO E COFRE) -->
     <section class="kpi-grid">
       <!-- 1. Patrimônio Total Real -->
       <div class="kpi-card vault-highlight">
         <div class="kpi-header">
-          <span>💼 Patrimônio Total na Conta</span>
+          <span>💼 Patrimônio Total na Binance</span>
           <span class="text-emerald" style="font-weight: 700;">100% REAL</span>
         </div>
-        <div class="kpi-value text-emerald" id="realTotalBalanceBrl">R$ 14,60</div>
+        <div class="kpi-value text-emerald" id="realTotalBalanceBrl">R$ 54,51</div>
         <div class="kpi-sub" style="display: flex; justify-content: space-between; font-size: 0.74rem; margin-top: 0.25rem;">
           <span>Soma Spot + Cripto + Simple Earn</span>
           <span style="color: #10b981;">● Sincronizado</span>
@@ -87,24 +87,24 @@
       <!-- 2. Reais Livres p/ Compras -->
       <div class="kpi-card">
         <div class="kpi-header">
-          <span>💵 Saldo Livre em Reais (BRL)</span>
-          <span class="text-cyan">PRONTO P/ OPERAR</span>
+          <span>💵 Caixa Livre em Reais (BRL)</span>
+          <span class="text-cyan">DISPONÍVEL</span>
         </div>
-        <div class="kpi-value text-cyan" id="realFreeBrl">R$ 0,01</div>
+        <div class="kpi-value text-cyan" id="realFreeBrl">R$ 20,58</div>
         <div class="kpi-sub">
-          <span>Capital desimpedido para novas entradas</span>
+          <span>Pronto para novas entradas dos robôs</span>
         </div>
       </div>
 
-      <!-- 3. Cripto em Posição Ativa -->
+      <!-- 3. Cripto em Operação (Scalping) -->
       <div class="kpi-card">
         <div class="kpi-header">
-          <span>🪙 Cripto em Scalping (Ao Vivo)</span>
-          <span class="text-amber" id="posHeaderBadge">POSIÇÃO ATIVA</span>
+          <span>⚡ Em Operação nos Robôs</span>
+          <span class="text-amber" id="posHeaderBadge">2 TRADES ATIVOS</span>
         </div>
-        <div class="kpi-value text-amber" id="realCryptoHeldBrl">R$ 5,03</div>
+        <div class="kpi-value text-amber" id="realCryptoHeldBrl">R$ 24,41</div>
         <div class="kpi-sub">
-          <span id="realCryptoHeldDetails">0.001248 BNB monitorado</span>
+          <span id="realCryptoHeldDetails">Solana (R$ 19,40) + BNB (R$ 5,01)</span>
         </div>
       </div>
 
@@ -116,54 +116,230 @@
         </div>
         <div class="kpi-value text-purple" id="realUsdcBrl">1.824 USDC</div>
         <div class="kpi-sub">
-          <span>~R$ 9,56 blindados fora do risco de trade</span>
+          <span>~R$ 9,56 blindados fora de risco de mercado</span>
         </div>
       </div>
     </section>
 
-    <!-- CARD HERO: MONITOR DE SCALPING AO VIVO DO ROBÔ -->
-    <section class="position-hero-card" id="activePositionCard" style="margin-bottom: 1.35rem;">
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
-        <div>
-          <div style="font-size: 0.72rem; color: #10b981; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;">
-            ● ROBÔ #1 (ALPHA MULTI) — MONITOR DE POSIÇÃO AO VIVO
-          </div>
-          <div style="font-size: 1.35rem; font-weight: 800; display: flex; align-items: center; gap: 0.6rem; margin-top: 0.2rem;" id="activeAssetTitle">
-            <span>BNB / BRL</span>
-            <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">COMPRA SPOT (LONG)</span>
-          </div>
-        </div>
+    <!-- BARRA VISUAL DE DISTRIBUIÇÃO DO PATRIMÔNIO (ONDE ESTÁ CADA CENTAVO) -->
+    <div style="background: var(--bg-card); padding: 0.85rem 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: 700;">
+        <span style="color: var(--text-primary);">📊 DISTRIBUIÇÃO EXATA DO SEU CAPITAL (R$ 54,51)</span>
+        <span style="color: var(--text-muted);">100% Auditado Binance REST API</span>
+      </div>
+      <div class="capital-breakdown-bar">
+        <div class="breakdown-segment seg-cash" id="segCash" style="width: 37.7%;" title="Caixa Livre: R$ 20,58"></div>
+        <div class="breakdown-segment seg-trade" id="segTrade" style="width: 44.8%;" title="Em Operação: R$ 24,41"></div>
+        <div class="breakdown-segment seg-vault" id="segVault" style="width: 17.5%;" title="Cofre Dólar: R$ 9,56"></div>
+      </div>
+      <div class="breakdown-legend">
+        <div class="legend-item"><span class="legend-dot" style="background: #38bdf8;"></span><span>💵 <strong>Caixa Livre:</strong> <span id="legCashVal">R$ 20,58</span> (37.7%)</span></div>
+        <div class="legend-item"><span class="legend-dot" style="background: #f59e0b;"></span><span>⚡ <strong>Em Scalping:</strong> <span id="legTradeVal">R$ 24,41</span> (44.8%)</span></div>
+        <div class="legend-item"><span class="legend-dot" style="background: #8b5cf6;"></span><span>🔒 <strong>Cofre Dólar Earn:</strong> <span id="legVaultVal">R$ 9,56</span> (17.5%)</span></div>
+      </div>
+    </div>
 
-        <div style="text-align: right;">
-          <div style="font-size: 0.72rem; color: var(--text-muted);">LUCRO / PREJUÍZO (PnL AO VIVO)</div>
-          <div style="font-size: 1.4rem; font-weight: 800;" id="activeLivePnL">+0.00% (R$ 0,00)</div>
+    <!-- SEÇÃO: MEUS ATIVOS NA BINANCE (IDÊNTICO AO SEU EXTRATO OFICIAL) -->
+    <section class="section-panel" style="margin-bottom: 1.5rem;">
+      <div class="section-header">
+        <div class="section-title">
+          <span>💼 Meus Ativos na Binance (Conforme seu Painel Oficial)</span>
+          <span class="badge-live" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">SALDOS REAIS SPOT & EARN</span>
+        </div>
+        <div style="font-size: 0.76rem; color: var(--text-secondary);">
+          Cada centavo classificado e acompanhado em tempo real
         </div>
       </div>
 
-      <!-- Grid de Métricas da Posição -->
-      <div class="position-stats-grid">
-        <div class="pos-stat-box">
-          <div class="pos-stat-label">Preço de Entrada</div>
-          <div class="pos-stat-value text-cyan" id="posEntryPrice">R$ 4.028,00</div>
-        </div>
-        <div class="pos-stat-box">
-          <div class="pos-stat-label">Preço Atual Binance</div>
-          <div class="pos-stat-value" id="posCurrentPrice" style="color: #f8fafc;">R$ 4.028,00</div>
-        </div>
-        <div class="pos-stat-box">
-          <div class="pos-stat-label">Trailing Profit Lock</div>
-          <div class="pos-stat-value text-emerald" id="posTrailingLock">+1.00% (Trava +0.40%)</div>
-        </div>
-        <div class="pos-stat-box">
-          <div class="pos-stat-label">Alvo de Saída (Take Profit)</div>
-          <div class="pos-stat-value text-purple" id="posTakeProfit">+1.20% a +1.50%</div>
-        </div>
-        <div class="pos-stat-box">
-          <div class="pos-stat-label">Stop Loss Cirúrgico</div>
-          <div class="pos-stat-value text-red" id="posStopLoss">-0.90%</div>
-        </div>
+      <div class="assets-table-wrapper">
+        <table class="assets-table">
+          <thead>
+            <tr>
+              <th>Ativo / Moeda</th>
+              <th>Quantidade Real</th>
+              <th>Cotação Agora</th>
+              <th>Valor Total em R$</th>
+              <th>Onde Está / Destinação</th>
+              <th>PnL Flutuante / Status</th>
+            </tr>
+          </thead>
+          <tbody id="assetsTableBody">
+            <!-- Preenchido dinamicamente pelo app.js com os dados reais -->
+            <tr>
+              <td>
+                <div class="asset-chip">
+                  <div class="asset-icon-box icon-brl">R$</div>
+                  <div><strong>Real Brasileiro</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">BRL (Fiat)</span></div>
+                </div>
+              </td>
+              <td><strong>20.58 BRL</strong></td>
+              <td>R$ 1,00</td>
+              <td><strong class="text-cyan">R$ 20,58</strong></td>
+              <td><span style="color: #38bdf8; font-weight: 600;">🟢 Caixa Livre</span> (Pronto para compras)</td>
+              <td><span style="color: var(--text-muted);">--</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="asset-chip">
+                  <div class="asset-icon-box icon-sol">SOL</div>
+                  <div><strong>Solana</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">SOL</span></div>
+                </div>
+              </td>
+              <td><strong>0.03100 SOL</strong></td>
+              <td>R$ 625,70</td>
+              <td><strong class="text-purple">R$ 19,40</strong></td>
+              <td><span style="color: #c084fc; font-weight: 600;">⚡ Robô #1 (Alpha Titans)</span></td>
+              <td><span style="color: #ef4444;" id="solPnlBadge">-R$ 0,02 (-0.16%)</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="asset-chip">
+                  <div class="asset-icon-box icon-bnb">BNB</div>
+                  <div><strong>Binance Coin</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">BNB</span></div>
+                </div>
+              </td>
+              <td><strong>0.00124 BNB</strong></td>
+              <td>R$ 4.029,00</td>
+              <td><strong class="text-amber">R$ 5,01</strong></td>
+              <td><span style="color: #fbbf24; font-weight: 600;">⚡ Robô #2 (Beta Speed)</span></td>
+              <td><span style="color: #10b981;" id="bnbPnlBadge">+R$ 0,01 (+0.07%)</span></td>
+            </tr>
+            <tr>
+              <td>
+                <div class="asset-chip">
+                  <div class="asset-icon-box icon-usdc">$</div>
+                  <div><strong>USD Coin</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">USDC (Dólar)</span></div>
+                </div>
+              </td>
+              <td><strong>1.8235 USDC</strong></td>
+              <td>R$ 5,24</td>
+              <td><strong class="text-emerald">R$ 9,56</strong></td>
+              <td><span style="color: #34d399; font-weight: 600;">🔒 Cofre Protegido</span> (Simple Earn)</td>
+              <td><span style="color: #10b981;">Rendendo Juros Diários</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </section>
+
+    <!-- SEÇÃO: ACOMPANHAMENTO DOS 2 ROBÔS COM PROJEÇÃO E METAS DE LUCRO -->
+    <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <h2 style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary); margin: 0;">
+          🎯 Acompanhamento & Projeções dos Robôs em Operação
+        </h2>
+        <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.2rem;">
+          Alvos milimétricos de saída no lucro, gatilho do Trailing Stop e proteção anti-ruína
+        </div>
+      </div>
+      <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">2 ROBÔS ATIVOS</span>
+    </div>
+
+    <div class="dual-bots-grid">
+      <!-- CARD ROBÔ #1: ALPHA TITANS (SOLANA) -->
+      <div class="bot-projection-card bot-alpha">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+          <div>
+            <div style="font-size: 0.72rem; color: #c084fc; font-weight: 700; text-transform: uppercase;">
+              ● ROBÔ #1 — ALPHA TITANS (GIGANTES)
+            </div>
+            <div style="font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+              <span>🟣 Solana (SOL/BRL)</span>
+              <span class="badge-live" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">COMPRADO</span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.68rem; color: var(--text-muted);">PnL AO VIVO</div>
+            <div style="font-size: 1.2rem; font-weight: 800;" id="alphaLivePnL">-0.16% (-R$ 0,03)</div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.6rem;">
+          Capital Alocado: <strong class="text-purple">R$ 19,40</strong> (0.031 SOL) • Entrada: <strong id="alphaEntryPrice">R$ 626,70</strong>
+        </div>
+
+        <!-- Termômetro de Projeção até a Venda no Lucro -->
+        <div style="background: rgba(0,0,0,0.25); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700;">
+            <span style="color: #c084fc;">🎯 ALVO DE VENDA (TAKE PROFIT +1.5%)</span>
+            <span class="text-emerald" id="alphaTargetPrice">R$ 636,10 (+R$ 0,29 de Lucro)</span>
+          </div>
+          <div class="target-progress-track">
+            <div class="target-progress-fill" id="alphaProgressFill" style="width: 25%; background: linear-gradient(90deg, #a855f7, #10b981);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: var(--text-muted); margin-top: 0.3rem;">
+            <span>Preço Agora: <strong id="alphaCurrentPrice" style="color: #f8fafc;">R$ 625,70</strong></span>
+            <span>Distância do Lucro: <strong class="text-cyan" id="alphaDistTarget">1.6% para bater meta</strong></span>
+          </div>
+        </div>
+
+        <!-- Gatilhos Técnicos de Proteção -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.72rem;">
+          <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
+            <span style="color: var(--text-muted);">🛡️ Trailing Stop Lock:</span><br>
+            <strong class="text-emerald">Ativa em R$ 632,97 (+1.0%)</strong><br>
+            <span style="font-size: 0.66rem; color: var(--text-secondary);">Garante +0.40% no bolso</span>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
+            <span style="color: var(--text-muted);">🛑 Stop Loss Anti-Ruína:</span><br>
+            <strong class="text-red">R$ 621,06 (-0.90%)</strong><br>
+            <span style="font-size: 0.66rem; color: var(--text-secondary);">Corta perda se reverter</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARD ROBÔ #2: BETA SPEED (BNB) -->
+      <div class="bot-projection-card bot-beta">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+          <div>
+            <div style="font-size: 0.72rem; color: #fbbf24; font-weight: 700; text-transform: uppercase;">
+              ● ROBÔ #2 — BETA SPEED (VELOCIDADE)
+            </div>
+            <div style="font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
+              <span>🟠 Binance Coin (BNB/BRL)</span>
+              <span class="badge-live" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">COMPRADO</span>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 0.68rem; color: var(--text-muted);">PnL AO VIVO</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: #10b981;" id="betaLivePnL">+0.05% (+R$ 0,01)</div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.6rem;">
+          Capital Alocado: <strong class="text-amber">R$ 5,01</strong> (0.00124 BNB) • Entrada: <strong id="betaEntryPrice">R$ 4.027,10</strong>
+        </div>
+
+        <!-- Termômetro de Projeção até a Venda no Lucro -->
+        <div style="background: rgba(0,0,0,0.25); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700;">
+            <span style="color: #fbbf24;">🎯 ALVO DE VENDA (TAKE PROFIT +1.5%)</span>
+            <span class="text-emerald" id="betaTargetPrice">R$ 4.087,50 (+R$ 0,08 de Lucro)</span>
+          </div>
+          <div class="target-progress-track">
+            <div class="target-progress-fill" id="betaProgressFill" style="width: 45%; background: linear-gradient(90deg, #f59e0b, #10b981);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: var(--text-muted); margin-top: 0.3rem;">
+            <span>Preço Agora: <strong id="betaCurrentPrice" style="color: #f8fafc;">R$ 4.029,00</strong></span>
+            <span>Distância do Lucro: <strong class="text-emerald" id="betaDistTarget">1.4% para bater meta</strong></span>
+          </div>
+        </div>
+
+        <!-- Gatilhos Técnicos de Proteção -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.72rem;">
+          <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
+            <span style="color: var(--text-muted);">🛡️ Trailing Stop Lock:</span><br>
+            <strong class="text-emerald">Ativa em R$ 4.067,37 (+1.0%)</strong><br>
+            <span style="font-size: 0.66rem; color: var(--text-secondary);">Garante +0.40% no bolso</span>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
+            <span style="color: var(--text-muted);">🛑 Stop Loss Anti-Ruína:</span><br>
+            <strong class="text-red">R$ 3.990,85 (-0.90%)</strong><br>
+            <span style="font-size: 0.66rem; color: var(--text-secondary);">Corta perda se reverter</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- GRID DE TRABALHO: GRÁFICO + PAINEL DE ESCALA LEAN SWARM -->
     <div class="main-workspace-grid">

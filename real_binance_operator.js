@@ -367,6 +367,89 @@ const ecosystemState = {
   }
 };
 
+async function refreshBalancesAndAssets() {
+  const balances = await getRealBalances();
+  if (!balances || balances.error) return null;
+
+  const usdcPrice = (await getLivePrice('USDCBRL')) || 5.24;
+  const usdcTotal = balances.USDC || balances.LDUSDC || 0;
+  const usdcVal = Number((usdcTotal * usdcPrice).toFixed(2));
+  const brlFree = Number((balances.brlFree || 0).toFixed(2));
+
+  let cryptoHoldingsValue = 0;
+  const assetsList = [
+    {
+      asset: 'BRL',
+      name: 'Real Brasileiro (Caixa Livre)',
+      type: 'FIAT_FREE',
+      qty: brlFree,
+      price: 1.0,
+      valueBrl: brlFree,
+      role: 'Caixa Livre (Pronto para Comprar)',
+      badgeClass: 'tag-fiat',
+      pnlText: '--'
+    }
+  ];
+
+  for (const asset of MONITORED_ASSETS) {
+    if (asset.baseAsset === 'USDC' || asset.baseAsset === 'BRL') continue;
+    const qty = balances[asset.baseAsset];
+    if (qty && qty >= asset.minQty) {
+      const curPrice = (await getLivePrice(asset.symbol)) || 1;
+      const val = Number((qty * curPrice).toFixed(2));
+      if (val >= 1.00) {
+        cryptoHoldingsValue += val;
+        const managingBot = ecosystemState.activeBots.find(b =>
+          (b.openPosition && b.openPosition.symbol.includes(asset.baseAsset)) ||
+          b.assignedAsset.includes(asset.baseAsset)
+        );
+        assetsList.push({
+          asset: asset.baseAsset,
+          name: asset.name,
+          symbol: asset.symbol,
+          type: 'CRYPTO_SCALP',
+          qty: qty,
+          price: curPrice,
+          valueBrl: val,
+          role: managingBot ? `${managingBot.name} (Scalping Ativo)` : 'Em Carteira Spot',
+          badgeClass: 'tag-cripto',
+          pnlText: managingBot && managingBot.dailyPnL ? `${managingBot.dailyPnL >= 0 ? '+' : ''}R$ ${managingBot.dailyPnL.toFixed(2)}` : '--'
+        });
+      }
+    }
+  }
+
+  if (usdcTotal > 0) {
+    assetsList.push({
+      asset: 'USDC',
+      name: 'USD Coin (Dólar Digital)',
+      type: 'VAULT_EARN',
+      qty: usdcTotal,
+      price: usdcPrice,
+      valueBrl: usdcVal,
+      role: 'Cofre Protegido (Simple Earn)',
+      badgeClass: 'tag-vault',
+      pnlText: 'Rendendo Juros'
+    });
+  }
+
+  const totalPatrimony = Number((brlFree + usdcVal + cryptoHoldingsValue).toFixed(2));
+
+  ecosystemState.realBalances = {
+    ...balances,
+    brlFree,
+    usdcTotal,
+    usdcBrlValue: usdcVal,
+    cryptoHoldingsValue: Number(cryptoHoldingsValue.toFixed(2)),
+    totalPatrimony,
+    assetsList
+  };
+  ecosystemState.totalDepositedCapital = totalPatrimony;
+  ecosystemState.masterVaultBalance = usdcVal;
+
+  return { balances, totalPatrimony, assetsList };
+}
+
 // =============================================================================
 // 4. MOTOR INTELIGENTE DE SELEÇÃO E SCALPING
 // =============================================================================
@@ -394,105 +477,88 @@ async function startMultiAssetTrader() {
     console.log('===================================================================\n');
   }
 
-  let cryptoHoldingsValue = 0;
-  let activeFoundPosition = null;
-
+  // Detecta se há posições ativas em criptos (ex: Solana, BNB)
+  let foundPositions = [];
   for (const asset of MONITORED_ASSETS) {
     if (asset.baseAsset === 'USDC' || asset.baseAsset === 'BRL') continue;
     const qty = balances[asset.baseAsset];
     if (qty && qty >= asset.minQty) {
       const curPrice = (await getLivePrice(asset.symbol)) || 1;
       const val = Number((qty * curPrice).toFixed(2));
-      if (val >= 1.00) {
-        cryptoHoldingsValue += val;
-        if (!activeFoundPosition && val >= 2.00) {
-          activeFoundPosition = {
-            symbol: asset.symbol,
-            assetName: asset.name,
-            baseAsset: asset.baseAsset,
-            decimals: asset.decimals,
-            side: 'LONG',
-            entryPrice: curPrice,
-            qty: qty,
-            notionalBrl: val,
-            orderId: 'LIVE-' + Date.now(),
-            openedAt: new Date().toLocaleTimeString('pt-BR')
-          };
-        }
+      if (val >= 2.00) {
+        foundPositions.push({
+          symbol: asset.symbol,
+          assetName: asset.name,
+          baseAsset: asset.baseAsset,
+          decimals: asset.decimals,
+          side: 'LONG',
+          entryPrice: curPrice,
+          qty: qty,
+          notionalBrl: val,
+          orderId: 'LIVE-' + Date.now(),
+          openedAt: new Date().toLocaleTimeString('pt-BR'),
+          targetTakeProfitPrice: Number((curPrice * 1.015).toFixed(2)),
+          targetProfitBrl: Number((val * 0.015).toFixed(2)),
+          trailingLockTriggerPrice: Number((curPrice * 1.010).toFixed(2)),
+          stopLossPrice: Number((curPrice * 0.991).toFixed(2))
+        });
       }
     }
   }
 
-  const usdcPrice = (await getLivePrice('USDCBRL')) || 5.24;
-  const usdcTotal = balances.USDC || balances.LDUSDC || 0;
-  const totalBrlEquivalent = (balances.brlFree || 0) + (usdcTotal * usdcPrice) + cryptoHoldingsValue;
-  console.log(`[PATRIMÔNIO REAL]: R$ ${(balances.brlFree || 0).toFixed(2)} BRL livres + ${usdcTotal.toFixed(4)} USDC (~R$ ${(usdcTotal * usdcPrice).toFixed(2)}) + Cripto R$ ${cryptoHoldingsValue.toFixed(2)} = Total R$ ${totalBrlEquivalent.toFixed(2)}`);
+  // Configuração dos 2 Robôs com base nas posições reais da Binance
+  const solPos = foundPositions.find(p => p.symbol === 'SOLBRL');
+  const bnbPos = foundPositions.find(p => p.symbol === 'BNBBRL');
+  const otherPos = foundPositions.find(p => p.symbol !== 'SOLBRL' && p.symbol !== 'BNBBRL');
 
-  ecosystemState.realBalances = {
-    ...balances,
-    usdcTotal,
-    usdcBrlValue: Number((usdcTotal * usdcPrice).toFixed(2)),
-    cryptoHoldingsValue: Number(cryptoHoldingsValue.toFixed(2))
-  };
-  ecosystemState.totalDepositedCapital = Number(totalBrlEquivalent.toFixed(2));
-
-  // Configuração dos Robôs com base no depósito confirmado de R$ 40,00
-  const freeBrl = balances.brlFree || 0;
-  if (freeBrl >= 35.0) {
-    const halfBrl = Number((Math.floor((freeBrl / 2) * 100) / 100).toFixed(2));
-    ecosystemState.activeBots = [
-      {
-        id: 'BOT-REAL-01',
-        name: 'Alpha-Titans-01',
-        generation: 1,
-        createdAtDay: 1,
-        assignedAsset: 'BTC/BRL',
-        marketType: 'BINANCE_CRIPTO',
-        initialDayCapital: halfBrl,
-        currentCapital: halfBrl,
-        dailyPnL: 0.00,
-        accumulatedCentsProfit: 0.00,
-        dailyTargetProfit: 20.00,
-        accumulatedVaultProfit: 0.00,
-        openPosition: null,
-        brain: {
-          iq: 122,
-          confidenceThreshold: 0.60,
-          weights: { w_rsi: 0.85, w_ema: 0.90, w_bollinger: 0.75, w_macd: 0.80, w_flow: 0.70, w_regime: 0.85 }
-        }
-      },
-      {
-        id: 'BOT-REAL-02',
-        name: 'Beta-Speed-02',
-        generation: 1,
-        createdAtDay: 1,
-        assignedAsset: activeFoundPosition ? activeFoundPosition.symbol.replace('BRL', '/BRL') : 'BNB/BRL',
-        marketType: 'BINANCE_CRIPTO',
-        initialDayCapital: halfBrl,
-        currentCapital: activeFoundPosition ? activeFoundPosition.notionalBrl : halfBrl,
-        dailyPnL: 0.00,
-        accumulatedCentsProfit: 0.00,
-        dailyTargetProfit: 20.00,
-        accumulatedVaultProfit: 0.00,
-        openPosition: activeFoundPosition || null,
-        brain: {
-          iq: 119,
-          confidenceThreshold: 0.58,
-          weights: { w_rsi: 0.88, w_ema: 0.85, w_bollinger: 0.80, w_macd: 0.75, w_flow: 0.75, w_regime: 0.80 }
-        }
+  ecosystemState.activeBots = [
+    {
+      id: 'BOT-REAL-01',
+      name: 'Alpha-Titans-01',
+      generation: 1,
+      createdAtDay: 1,
+      assignedAsset: solPos ? 'SOL/BRL' : 'BTC/BRL',
+      marketType: 'BINANCE_CRIPTO',
+      initialDayCapital: 20.00,
+      currentCapital: solPos ? solPos.notionalBrl : 20.00,
+      dailyPnL: 0.00,
+      accumulatedCentsProfit: 0.00,
+      dailyTargetProfit: 20.00,
+      accumulatedVaultProfit: 0.00,
+      openPosition: solPos || otherPos || null,
+      brain: {
+        iq: 122,
+        confidenceThreshold: 0.60,
+        weights: { w_rsi: 0.85, w_ema: 0.90, w_bollinger: 0.75, w_macd: 0.80, w_flow: 0.70, w_regime: 0.85 }
       }
-    ];
-    console.log(`🤖 [LEAN SWARM ATIVADO]: 2 Robôs operando simultâneos!`);
-    console.log(`   - Robô #1 (Alpha): R$ ${halfBrl.toFixed(2)} alocados (Foco: BTC, ETH, SOL)`);
-    console.log(`   - Robô #2 (Beta): R$ ${halfBrl.toFixed(2)} alocados (Foco: BNB, XRP, SUI, DOGE) ${activeFoundPosition ? `[Posição BNB ativa: R$ ${activeFoundPosition.notionalBrl}]` : ''}`);
-  } else if (activeFoundPosition) {
-    ecosystemState.activeBots[0].assignedAsset = activeFoundPosition.symbol.replace('BRL', '/BRL');
-    ecosystemState.activeBots[0].openPosition = activeFoundPosition;
-    ecosystemState.activeBots[0].currentCapital = activeFoundPosition.notionalBrl;
-    console.log(`[POSIÇÃO ATIVA DETECTADA]: ${activeFoundPosition.qty} ${activeFoundPosition.baseAsset} (~R$ ${activeFoundPosition.notionalBrl}) monitorando saída no lucro de 1% a 1.5%!`);
-  } else {
-    ecosystemState.activeBots[0].currentCapital = Number((Math.floor((balances.brlFree || 5.00) * 100) / 100).toFixed(2));
-  }
+    },
+    {
+      id: 'BOT-REAL-02',
+      name: 'Beta-Speed-02',
+      generation: 1,
+      createdAtDay: 1,
+      assignedAsset: bnbPos ? 'BNB/BRL' : 'BNB/BRL',
+      marketType: 'BINANCE_CRIPTO',
+      initialDayCapital: 20.00,
+      currentCapital: bnbPos ? bnbPos.notionalBrl : 20.00,
+      dailyPnL: 0.00,
+      accumulatedCentsProfit: 0.00,
+      dailyTargetProfit: 20.00,
+      accumulatedVaultProfit: 0.00,
+      openPosition: bnbPos || null,
+      brain: {
+        iq: 119,
+        confidenceThreshold: 0.58,
+        weights: { w_rsi: 0.88, w_ema: 0.85, w_bollinger: 0.80, w_macd: 0.75, w_flow: 0.75, w_regime: 0.80 }
+      }
+    }
+  ];
+
+  await refreshBalancesAndAssets();
+
+  console.log(`🤖 [LEAN SWARM ATIVADO]: 2 Robôs operando simultâneos!`);
+  console.log(`   - Robô #1 (Alpha): Foco SOL/BTC/ETH ${solPos ? `[Posição SOL ativa: R$ ${solPos.notionalBrl}]` : ''}`);
+  console.log(`   - Robô #2 (Beta): Foco BNB/XRP/SUI ${bnbPos ? `[Posição BNB ativa: R$ ${bnbPos.notionalBrl}]` : ''}`);
 
   let tickCount = 0;
   let lastBuyAttempt = 0;
@@ -741,6 +807,11 @@ async function startMultiAssetTrader() {
             }
           }
         }
+      }
+
+      // Atualiza saldos reais e lista de ativos da Binance a cada 6 ticks (15s)
+      if (tickCount % 6 === 0) {
+        await refreshBalancesAndAssets();
       }
 
       // Sincroniza o estado atualizado no Firebase a cada 3 ticks

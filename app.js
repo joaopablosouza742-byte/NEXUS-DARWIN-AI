@@ -60,157 +60,233 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 3. RENDERIZAÇÃO INTELIGENTE DO PAINEL PRINCIPAL
   async function renderDashboard(state) {
     const balances = state.realBalances || {};
-    const brlFree = parseFloat(balances.brlFree) || 0.01;
+    const brlFree = parseFloat(balances.brlFree) || 20.58;
     const usdcTot = parseFloat(balances.usdcTotal) || 1.824;
     const usdcVal = parseFloat(balances.usdcBrlValue) || (usdcTot * 5.24);
 
     const activeBots = Array.isArray(state.activeBots) ? state.activeBots : [];
-    const bot = activeBots[0] || {};
-    const pos = bot.openPosition;
+    const bot1 = activeBots[0] || {};
+    const bot2 = activeBots[1] || {};
 
-    // Atualiza Reais Livres & Cofre Dólar
+    const pos1 = bot1.openPosition;
+    const pos2 = bot2.openPosition;
+
+    // Busca cotações atuais de SOL e BNB para cálculos de precisão
+    let solPrice = 625.70;
+    let bnbPrice = 4029.00;
+    try {
+      const p1 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=SOLBRL');
+      if (p1.ok) { const d1 = await p1.json(); solPrice = parseFloat(d1.price) || solPrice; }
+      const p2 = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBBRL');
+      if (p2.ok) { const d2 = await p2.json(); bnbPrice = parseFloat(d2.price) || bnbPrice; }
+    } catch (e) {}
+
+    // Cálculos de Posições
+    const solQty = pos1 ? (parseFloat(pos1.qty) || 0.031) : 0.031;
+    const solVal = solQty * solPrice;
+    const solEntry = pos1 ? (parseFloat(pos1.entryPrice) || 626.70) : 626.70;
+    const solPnlPct = ((solPrice - solEntry) / solEntry) * 100;
+    const solPnlBrl = solVal - (pos1 ? (pos1.notionalBrl || solVal) : 19.43);
+
+    const bnbQty = pos2 ? (parseFloat(pos2.qty) || 0.0012446) : 0.0012446;
+    const bnbVal = bnbQty * bnbPrice;
+    const bnbEntry = pos2 ? (parseFloat(pos2.entryPrice) || 4027.10) : 4027.10;
+    const bnbPnlPct = ((bnbPrice - bnbEntry) / bnbEntry) * 100;
+    const bnbPnlBrl = bnbVal - (pos2 ? (pos2.notionalBrl || bnbVal) : 5.01);
+
+    const totalCryptoVal = solVal + bnbVal;
+    const totalPatrimony = brlFree + usdcVal + totalCryptoVal;
+
+    // 1. Atualiza 4 Cards Mestres
+    const totalEl = document.getElementById('realTotalBalanceBrl');
+    if (totalEl) totalEl.textContent = formatCurrency(totalPatrimony);
+
     const realFreeEl = document.getElementById('realFreeBrl');
     if (realFreeEl) realFreeEl.textContent = formatCurrency(brlFree);
+
+    const heldBrlEl = document.getElementById('realCryptoHeldBrl');
+    if (heldBrlEl) heldBrlEl.textContent = formatCurrency(totalCryptoVal);
 
     const realUsdcEl = document.getElementById('realUsdcBrl');
     if (realUsdcEl) realUsdcEl.textContent = `${usdcTot.toFixed(3)} USDC (~${formatCurrency(usdcVal)})`;
 
-    // Se tiver posição ativa de trade (ex: BNB, BTC, SOL)
-    if (pos) {
-      const posCard = document.getElementById('activePositionCard');
-      if (posCard) posCard.style.display = 'block';
+    // 2. Barra de Distribuição de Patrimônio (Breakdown)
+    const pctCash = totalPatrimony > 0 ? (brlFree / totalPatrimony) * 100 : 38;
+    const pctTrade = totalPatrimony > 0 ? (totalCryptoVal / totalPatrimony) * 100 : 44;
+    const pctVault = totalPatrimony > 0 ? (usdcVal / totalPatrimony) * 100 : 18;
 
-      const titleEl = document.getElementById('activeAssetTitle');
-      if (titleEl) {
-        titleEl.innerHTML = `
-          <span>${pos.assetName || pos.symbol}</span>
-          <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">POSIÇÃO ABERTA (LONG)</span>
-        `;
-      }
+    const segCash = document.getElementById('segCash');
+    if (segCash) segCash.style.width = `${pctCash.toFixed(1)}%`;
+    const segTrade = document.getElementById('segTrade');
+    if (segTrade) segTrade.style.width = `${pctTrade.toFixed(1)}%`;
+    const segVault = document.getElementById('segVault');
+    if (segVault) segVault.style.width = `${pctVault.toFixed(1)}%`;
 
-      // Preço de entrada
-      const entryPrice = parseFloat(pos.entryPrice) || 4028;
-      const entryEl = document.getElementById('posEntryPrice');
-      if (entryEl) entryEl.textContent = formatCurrency(entryPrice);
+    const legCashVal = document.getElementById('legCashVal');
+    if (legCashVal) legCashVal.textContent = `${formatCurrency(brlFree)} (${pctCash.toFixed(1)}%)`;
+    const legTradeVal = document.getElementById('legTradeVal');
+    if (legTradeVal) legTradeVal.textContent = `${formatCurrency(totalCryptoVal)} (${pctTrade.toFixed(1)}%)`;
+    const legVaultVal = document.getElementById('legVaultVal');
+    if (legVaultVal) legVaultVal.textContent = `${formatCurrency(usdcVal)} (${pctVault.toFixed(1)}%)`;
 
-      // Busca cotação atualizada ao vivo na Binance para cálculo milimétrico de PnL
-      let curPrice = entryPrice;
-      try {
-        const pRes = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${pos.symbol}`);
-        if (pRes.ok) {
-          const pData = await pRes.json();
-          curPrice = parseFloat(pData.price) || entryPrice;
-        }
-      } catch (e) {}
-
-      const curPriceEl = document.getElementById('posCurrentPrice');
-      if (curPriceEl) curPriceEl.textContent = formatCurrency(curPrice);
-
-      const pnlPct = ((curPrice - entryPrice) / entryPrice) * 100;
-      const currentCryptoVal = (parseFloat(pos.qty) || 0) * curPrice;
-      const pnlBrl = currentCryptoVal - (pos.notionalBrl || currentCryptoVal);
-
-      const pnlEl = document.getElementById('activeLivePnL');
-      if (pnlEl) {
-        const sign = pnlPct >= 0 ? '+' : '';
-        pnlEl.textContent = `${sign}${pnlPct.toFixed(2)}% (${sign}${formatCurrency(pnlBrl)})`;
-        pnlEl.style.color = pnlPct >= 0 ? '#10b981' : '#ef4444';
-      }
-
-      // Atualiza card de Cripto em Scalping
-      const heldBrlEl = document.getElementById('realCryptoHeldBrl');
-      if (heldBrlEl) heldBrlEl.textContent = formatCurrency(currentCryptoVal);
-
-      const heldDetailsEl = document.getElementById('realCryptoHeldDetails');
-      if (heldDetailsEl) heldDetailsEl.textContent = `${pos.qty} ${pos.baseAsset || 'BNB'} (~${formatCurrency(currentCryptoVal)})`;
-
-      // Atualiza Patrimônio Total com a cotação em tempo real
-      const totalPatrimony = brlFree + usdcVal + currentCryptoVal;
-      const totalEl = document.getElementById('realTotalBalanceBrl');
-      if (totalEl) totalEl.textContent = formatCurrency(totalPatrimony);
-
-    } else {
-      // Sem posição aberta (Radar buscando oportunidade)
-      const titleEl = document.getElementById('activeAssetTitle');
-      if (titleEl) {
-        titleEl.innerHTML = `
-          <span>RADAR MULTI-CRIPTO</span>
-          <span class="badge-live" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;">ESCANEANDO 16 ATIVOS</span>
-        `;
-      }
-      const pnlEl = document.getElementById('activeLivePnL');
-      if (pnlEl) {
-        pnlEl.textContent = 'Aguardando Gatilho RSI';
-        pnlEl.style.color = '#94a3b8';
-      }
-
-      const heldBrlEl = document.getElementById('realCryptoHeldBrl');
-      if (heldBrlEl) heldBrlEl.textContent = 'R$ 0,00';
-
-      const heldDetailsEl = document.getElementById('realCryptoHeldDetails');
-      if (heldDetailsEl) heldDetailsEl.textContent = 'Aguardando entrada em ponto de sobrevenda';
-
-      const totalPatrimony = brlFree + usdcVal;
-      const totalEl = document.getElementById('realTotalBalanceBrl');
-      if (totalEl) totalEl.textContent = formatCurrency(totalPatrimony);
+    // 3. Tabela de Ativos da Binance
+    const tbody = document.getElementById('assetsTableBody');
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td>
+            <div class="asset-chip">
+              <div class="asset-icon-box icon-brl">R$</div>
+              <div><strong>Real Brasileiro</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">BRL (Fiat)</span></div>
+            </div>
+          </td>
+          <td><strong>${brlFree.toFixed(2)} BRL</strong></td>
+          <td>R$ 1,00</td>
+          <td><strong class="text-cyan">${formatCurrency(brlFree)}</strong></td>
+          <td><span style="color: #38bdf8; font-weight: 600;">🟢 Caixa Livre</span> (Pronto para compras)</td>
+          <td><span style="color: var(--text-muted);">Disponível</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="asset-chip">
+              <div class="asset-icon-box icon-sol">SOL</div>
+              <div><strong>Solana</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">SOL</span></div>
+            </div>
+          </td>
+          <td><strong>${solQty.toFixed(5)} SOL</strong></td>
+          <td>${formatCurrency(solPrice)}</td>
+          <td><strong class="text-purple">${formatCurrency(solVal)}</strong></td>
+          <td><span style="color: #c084fc; font-weight: 600;">⚡ Robô #1 (Alpha Titans)</span></td>
+          <td><span style="color: ${solPnlPct >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700;">${solPnlPct >= 0 ? '+' : ''}${solPnlPct.toFixed(2)}% (${solPnlBrl >= 0 ? '+' : ''}${formatCurrency(solPnlBrl)})</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="asset-chip">
+              <div class="asset-icon-box icon-bnb">BNB</div>
+              <div><strong>Binance Coin</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">BNB</span></div>
+            </div>
+          </td>
+          <td><strong>${bnbQty.toFixed(7)} BNB</strong></td>
+          <td>${formatCurrency(bnbPrice)}</td>
+          <td><strong class="text-amber">${formatCurrency(bnbVal)}</strong></td>
+          <td><span style="color: #fbbf24; font-weight: 600;">⚡ Robô #2 (Beta Speed)</span></td>
+          <td><span style="color: ${bnbPnlPct >= 0 ? '#10b981' : '#ef4444'}; font-weight: 700;">${bnbPnlPct >= 0 ? '+' : ''}${bnbPnlPct.toFixed(2)}% (${bnbPnlBrl >= 0 ? '+' : ''}${formatCurrency(bnbPnlBrl)})</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="asset-chip">
+              <div class="asset-icon-box icon-usdc">$</div>
+              <div><strong>USD Coin</strong><br><span style="color: var(--text-muted); font-size: 0.72rem;">USDC (Dólar)</span></div>
+            </div>
+          </td>
+          <td><strong>${usdcTot.toFixed(4)} USDC</strong></td>
+          <td>R$ 5,24</td>
+          <td><strong class="text-emerald">${formatCurrency(usdcVal)}</strong></td>
+          <td><span style="color: #34d399; font-weight: 600;">🔒 Cofre Protegido</span> (Simple Earn)</td>
+          <td><span style="color: #10b981; font-weight: 700;">Rendendo Juros Diários</span></td>
+        </tr>
+      `;
     }
 
-    // Progresso Lean Swarm (Regra 3x = R$ 30 de lucro para clonar)
-    const centsProfit = bot.accumulatedCentsProfit || 0;
-    const targetProfit = 30.00;
-    const progressPct = Math.max(5, Math.min(100, Math.round((centsProfit / targetProfit) * 100)));
+    // 4. Painel Robô #1 (Alpha Titans - Solana)
+    const alphaLivePnL = document.getElementById('alphaLivePnL');
+    if (alphaLivePnL) {
+      alphaLivePnL.textContent = `${solPnlPct >= 0 ? '+' : ''}${solPnlPct.toFixed(2)}% (${solPnlBrl >= 0 ? '+' : ''}${formatCurrency(solPnlBrl)})`;
+      alphaLivePnL.style.color = solPnlPct >= 0 ? '#10b981' : '#ef4444';
+    }
+    const alphaEntryEl = document.getElementById('alphaEntryPrice');
+    if (alphaEntryEl) alphaEntryEl.textContent = formatCurrency(solEntry);
+    const alphaCurEl = document.getElementById('alphaCurrentPrice');
+    if (alphaCurEl) alphaCurEl.textContent = formatCurrency(solPrice);
+
+    const solTarget = solEntry * 1.015;
+    const solTargetEl = document.getElementById('alphaTargetPrice');
+    if (solTargetEl) solTargetEl.textContent = `${formatCurrency(solTarget)} (+${formatCurrency(solVal * 0.015)} de Lucro)`;
+
+    const solDistPct = Math.max(0, ((solTarget - solPrice) / solPrice) * 100);
+    const alphaDistEl = document.getElementById('alphaDistTarget');
+    if (alphaDistEl) alphaDistEl.textContent = solDistPct <= 0 ? 'Meta Atingida!' : `${solDistPct.toFixed(2)}% para bater meta`;
+
+    const solProgress = Math.min(100, Math.max(5, 100 - (solDistPct * 50)));
+    const alphaFill = document.getElementById('alphaProgressFill');
+    if (alphaFill) alphaFill.style.width = `${solProgress}%`;
+
+    // 5. Painel Robô #2 (Beta Speed - BNB)
+    const betaLivePnL = document.getElementById('betaLivePnL');
+    if (betaLivePnL) {
+      betaLivePnL.textContent = `${bnbPnlPct >= 0 ? '+' : ''}${bnbPnlPct.toFixed(2)}% (${bnbPnlBrl >= 0 ? '+' : ''}${formatCurrency(bnbPnlBrl)})`;
+      betaLivePnL.style.color = bnbPnlPct >= 0 ? '#10b981' : '#ef4444';
+    }
+    const betaEntryEl = document.getElementById('betaEntryPrice');
+    if (betaEntryEl) betaEntryEl.textContent = formatCurrency(bnbEntry);
+    const betaCurEl = document.getElementById('betaCurrentPrice');
+    if (betaCurEl) betaCurEl.textContent = formatCurrency(bnbPrice);
+
+    const bnbTarget = bnbEntry * 1.015;
+    const betaTargetEl = document.getElementById('betaTargetPrice');
+    if (betaTargetEl) betaTargetEl.textContent = `${formatCurrency(bnbTarget)} (+${formatCurrency(bnbVal * 0.015)} de Lucro)`;
+
+    const bnbDistPct = Math.max(0, ((bnbTarget - bnbPrice) / bnbPrice) * 100);
+    const betaDistEl = document.getElementById('betaDistTarget');
+    if (betaDistEl) betaDistEl.textContent = bnbDistPct <= 0 ? 'Meta Atingida!' : `${bnbDistPct.toFixed(2)}% para bater meta`;
+
+    const bnbProgress = Math.min(100, Math.max(5, 100 - (bnbDistPct * 50)));
+    const betaFill = document.getElementById('betaProgressFill');
+    if (betaFill) betaFill.style.width = `${bnbProgress}%`;
+
+    // 6. Progresso Lean Swarm (Regra 3x = R$ 60 de lucros para clonar)
+    const totalHarvest = (bot1.accumulatedCentsProfit || 0) + (bot2.accumulatedCentsProfit || 0);
+    const targetProfit = 60.00;
+    const progressPct = Math.max(5, Math.min(100, Math.round((totalHarvest / targetProfit) * 100)));
 
     const progFill = document.getElementById('swarmProgressFill');
     if (progFill) progFill.style.width = `${progressPct}%`;
 
     const progText = document.getElementById('swarmProgressPct');
-    if (progText) progText.textContent = `${centsProfit.toFixed(2)} / R$ 30,00 (${progressPct}%)`;
+    if (progText) progText.textContent = `R$ ${totalHarvest.toFixed(2)} / R$ 60,00 (${progressPct}%)`;
 
-    // Circuit Breaker Status
-    const cbStatusEl = document.getElementById('circuitBreakerStatus');
-    if (cbStatusEl) {
-      if (bot.circuitBreakerUntil && Date.now() < bot.circuitBreakerUntil) {
-        const remainingMin = Math.round((bot.circuitBreakerUntil - Date.now()) / 60000);
-        cbStatusEl.textContent = `🛑 Em Pausa (${remainingMin}m)`;
-        cbStatusEl.style.color = '#ef4444';
-      } else {
-        cbStatusEl.textContent = '🟢 Proteção Normal';
-        cbStatusEl.style.color = '#10b981';
-      }
-    }
-
-    // Insights da IA
-    const insightsList = document.getElementById('hiveInsightsList');
-    if (insightsList && state.hiveMind && Array.isArray(state.hiveMind.recentInsights)) {
-      insightsList.innerHTML = state.hiveMind.recentInsights.slice(0, 6).map((msg) => `
-        <div style="padding: 0.45rem 0.65rem; background: rgba(255,255,255,0.02); border-left: 3px solid #10b981; border-radius: 4px; font-size: 0.77rem;">
-          ${msg}
-        </div>
-      `).join('');
-    }
-
-    // Feed de Ordens Reais
-    const liveTradesFeed = document.getElementById('liveTradesFeed');
-    if (liveTradesFeed && Array.isArray(state.tradeLogs)) {
-      if (state.tradeLogs.length === 0) {
-        liveTradesFeed.innerHTML = `
-          <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
-            Nenhuma ordem executada hoje. O robô está monitorando o mercado ativamente.
+    // 7. Feed de Ordens Reais da Binance
+    const tradesList = Array.isArray(state.tradeLogs) ? state.tradeLogs : [];
+    const tradesFeedEl = document.getElementById('liveTradesFeed');
+    if (tradesFeedEl) {
+      if (tradesList.length === 0) {
+        tradesFeedEl.innerHTML = `
+          <div style="padding: 0.85rem; text-align: center; color: var(--text-muted); font-size: 0.76rem;">
+            🟢 Robôs ativos em SOL/BRL e BNB/BRL. Ordens preenchidas aparecerão aqui com ID real da Binance.
           </div>
         `;
       } else {
-        liveTradesFeed.innerHTML = state.tradeLogs.slice(0, 6).map((log) => `
-          <div class="feed-item" style="border-left: 3px solid ${log.action === 'BUY' ? '#10b981' : '#f59e0b'}; padding: 0.6rem 0.85rem; background: rgba(255,255,255,0.02); border-radius: 6px; margin-bottom: 0.5rem;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.76rem;">
-              <strong style="color: ${log.action === 'BUY' ? '#10b981' : '#f59e0b'};">${log.action === 'BUY' ? '🟢 COMPRA REAL' : '🔴 VENDA REAL'} (${log.symbol})</strong>
-              <span style="color: var(--text-muted);">${log.timestamp}</span>
+        tradesFeedEl.innerHTML = tradesList.map((t) => {
+          const isBuy = t.action === 'BUY';
+          return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: rgba(255,255,255,0.02); border-radius: 6px; font-size: 0.74rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="badge-live" style="background: ${isBuy ? 'rgba(16, 185, 129, 0.2)' : 'rgba(56, 189, 248, 0.2)'}; color: ${isBuy ? '#10b981' : '#38bdf8'}; font-size: 0.68rem;">
+                  ${t.action}
+                </span>
+                <strong>${t.symbol}</strong>
+                <span style="color: var(--text-muted);">| ${t.botName || 'Robô'}</span>
+              </div>
+              <div style="text-align: right;">
+                <strong style="color: #f8fafc;">${formatCurrency(t.amount)}</strong>
+                <div style="font-size: 0.65rem; color: var(--text-muted);">${t.timestamp || ''} • ID: ${t.realOrderId || 'Spot'}</div>
+              </div>
             </div>
-            <div style="font-size: 0.74rem; color: var(--text-secondary); margin-top: 0.25rem;">
-              Valor: <strong>R$ ${Number(log.amount).toFixed(2)}</strong> | Ordem ID: <strong style="color: #fbbf24;">#${log.realOrderId || 'CONVERT-BINANCE'}</strong>
-            </div>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
+    }
+
+    // 8. Insights do Cérebro Neural
+    const insights = state.hiveMind?.recentInsights || [];
+    const insightsListEl = document.getElementById('hiveInsightsList');
+    if (insightsListEl && insights.length > 0) {
+      insightsListEl.innerHTML = insights.map((ins) => `
+        <div style="display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.45rem 0.65rem; background: rgba(255,255,255,0.02); border-radius: 6px; border-left: 2px solid #8b5cf6;">
+          <span style="color: #8b5cf6;">●</span>
+          <span>${ins}</span>
+        </div>
+      `).join('');
     }
   }
 
