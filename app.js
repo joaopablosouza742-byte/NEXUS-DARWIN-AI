@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // DETALHAMENTO DA CONTA REAL
     const realTotalEl = document.getElementById('realTotalBalanceBrl');
-    if (realTotalEl) realTotalEl.textContent = formatCurrency(state.totalDepositedCapital || 10.00);
+    if (realTotalEl) realTotalEl.textContent = formatCurrency(state.totalDepositedCapital || 14.69);
 
     const realFreeBrlEl = document.getElementById('realFreeBrl');
     if (realFreeBrlEl) {
@@ -95,8 +95,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const realUsdcBrlEl = document.getElementById('realUsdcBrl');
     if (realUsdcBrlEl) {
-      const usdcTot = state.realBalances ? (state.realBalances.usdcTotal || 0.822) : 0.822;
-      const usdcVal = state.realBalances ? (state.realBalances.usdcBrlValue || 4.70) : 4.70;
+      const usdcTot = state.realBalances ? (state.realBalances.usdcTotal || 1.824) : 1.824;
+      const usdcVal = state.realBalances ? (state.realBalances.usdcBrlValue || 9.56) : 9.56;
       realUsdcBrlEl.textContent = `${usdcTot.toFixed(3)} USDC (~${formatCurrency(usdcVal)})`;
     }
 

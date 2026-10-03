@@ -152,6 +152,20 @@ async function getRealBalances() {
         if (b.asset === 'BRL') result.brlFree = free;
         else if (free > 0) result[b.asset] = free;
       });
+
+      // Captura também saldo aplicado no Binance Simple Earn (Flexível):
+      try {
+        const earnRes = await binanceSignedRequest('/sapi/v1/simple-earn/flexible/position', 'GET');
+        if (earnRes.data && Array.isArray(earnRes.data.rows)) {
+          earnRes.data.rows.forEach((r) => {
+            const amt = parseFloat(r.totalAmount) || 0;
+            if (amt > 0) {
+              result[r.asset] = (result[r.asset] || 0) + amt;
+            }
+          });
+        }
+      } catch (earnErr) {}
+
       return result;
     } else if (res.data && res.data.code) {
       return { error: res.data.msg, code: res.data.code, brlFree: 0 };
@@ -180,11 +194,15 @@ function getLivePrice(symbol) {
 
 async function executeConvertTrade(fromAsset, toAsset, amount) {
   try {
-    console.log(`🔄 [CONVERSÃO DIRETA BINANCE] Solicitando cotação para ${amount} ${fromAsset} -> ${toAsset}...`);
+    const formattedAmount = fromAsset === 'BRL'
+      ? (Math.floor(Number(amount) * 100) / 100).toFixed(2)
+      : String(amount);
+    console.log(`🔄 [CONVERSÃO DIRETA BINANCE] Solicitando cotação para ${formattedAmount} ${fromAsset} -> ${toAsset}...`);
     const quoteRes = await binanceSignedRequest('/sapi/v1/convert/getQuote', 'POST', {
       fromAsset,
       toAsset,
-      fromAmount: String(amount)
+      fromAmount: formattedAmount,
+      walletType: 'SPOT'
     });
     if (!quoteRes.data || !quoteRes.data.quoteId) {
       console.error('❌ [CONVERSÃO DIRETA] Falha na cotação:', quoteRes.data);
@@ -376,8 +394,8 @@ async function startMultiAssetTrader() {
     console.log('===================================================================\n');
   }
 
-  const usdcPrice = (await getLivePrice('USDCBRL')) || 5.70;
-  const usdcTotal = (balances.USDC || 0) + (balances.LDUSDC || 0);
+  const usdcPrice = (await getLivePrice('USDCBRL')) || 5.24;
+  const usdcTotal = balances.USDC || balances.LDUSDC || 0;
   const totalBrlEquivalent = (balances.brlFree || 0) + (usdcTotal * usdcPrice);
   console.log(`[PATRIMÔNIO REAL]: R$ ${(balances.brlFree || 0).toFixed(2)} BRL livres + ${usdcTotal.toFixed(4)} USDC (~R$ ${(usdcTotal * usdcPrice).toFixed(2)}) = Total R$ ${totalBrlEquivalent.toFixed(2)}`);
 

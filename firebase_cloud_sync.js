@@ -89,6 +89,8 @@ class FirebaseCloudSync {
         binanceFundingVault: state.binanceFundingVault,
         alpacaCashVault: state.alpacaCashVault,
         totalHistoricalProfitSaved: state.totalHistoricalProfitSaved,
+        totalDepositedCapital: state.totalDepositedCapital || 14.69,
+        realBalances: state.realBalances || null,
         hiveMind: state.hiveMind,
         activeBots: state.activeBots,
         deadBots: (state.deadBots || []).slice(0, 25),
