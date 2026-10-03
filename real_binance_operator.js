@@ -436,7 +436,56 @@ async function startMultiAssetTrader() {
   };
   ecosystemState.totalDepositedCapital = Number(totalBrlEquivalent.toFixed(2));
 
-  if (activeFoundPosition) {
+  // Configuração dos Robôs com base no depósito confirmado de R$ 40,00
+  const freeBrl = balances.brlFree || 0;
+  if (freeBrl >= 35.0) {
+    const halfBrl = Number((Math.floor((freeBrl / 2) * 100) / 100).toFixed(2));
+    ecosystemState.activeBots = [
+      {
+        id: 'BOT-REAL-01',
+        name: 'Alpha-Titans-01',
+        generation: 1,
+        createdAtDay: 1,
+        assignedAsset: 'BTC/BRL',
+        marketType: 'BINANCE_CRIPTO',
+        initialDayCapital: halfBrl,
+        currentCapital: halfBrl,
+        dailyPnL: 0.00,
+        accumulatedCentsProfit: 0.00,
+        dailyTargetProfit: 20.00,
+        accumulatedVaultProfit: 0.00,
+        openPosition: null,
+        brain: {
+          iq: 122,
+          confidenceThreshold: 0.60,
+          weights: { w_rsi: 0.85, w_ema: 0.90, w_bollinger: 0.75, w_macd: 0.80, w_flow: 0.70, w_regime: 0.85 }
+        }
+      },
+      {
+        id: 'BOT-REAL-02',
+        name: 'Beta-Speed-02',
+        generation: 1,
+        createdAtDay: 1,
+        assignedAsset: activeFoundPosition ? activeFoundPosition.symbol.replace('BRL', '/BRL') : 'BNB/BRL',
+        marketType: 'BINANCE_CRIPTO',
+        initialDayCapital: halfBrl,
+        currentCapital: activeFoundPosition ? activeFoundPosition.notionalBrl : halfBrl,
+        dailyPnL: 0.00,
+        accumulatedCentsProfit: 0.00,
+        dailyTargetProfit: 20.00,
+        accumulatedVaultProfit: 0.00,
+        openPosition: activeFoundPosition || null,
+        brain: {
+          iq: 119,
+          confidenceThreshold: 0.58,
+          weights: { w_rsi: 0.88, w_ema: 0.85, w_bollinger: 0.80, w_macd: 0.75, w_flow: 0.75, w_regime: 0.80 }
+        }
+      }
+    ];
+    console.log(`🤖 [LEAN SWARM ATIVADO]: 2 Robôs operando simultâneos!`);
+    console.log(`   - Robô #1 (Alpha): R$ ${halfBrl.toFixed(2)} alocados (Foco: BTC, ETH, SOL)`);
+    console.log(`   - Robô #2 (Beta): R$ ${halfBrl.toFixed(2)} alocados (Foco: BNB, XRP, SUI, DOGE) ${activeFoundPosition ? `[Posição BNB ativa: R$ ${activeFoundPosition.notionalBrl}]` : ''}`);
+  } else if (activeFoundPosition) {
     ecosystemState.activeBots[0].assignedAsset = activeFoundPosition.symbol.replace('BRL', '/BRL');
     ecosystemState.activeBots[0].openPosition = activeFoundPosition;
     ecosystemState.activeBots[0].currentCapital = activeFoundPosition.notionalBrl;
@@ -497,7 +546,7 @@ async function startMultiAssetTrader() {
           if (bestCandidate && bot.currentCapital >= 2.00 && (Date.now() - lastBuyAttempt > 30000)) {
             lastBuyAttempt = Date.now();
             const { asset, rsi, price } = bestCandidate;
-            const buyAmount = Number((Math.floor(Math.min(bot.currentCapital, 10.00) * 100) / 100).toFixed(2));
+            const buyAmount = Number((Math.floor(Math.min(bot.currentCapital, 20.00) * 100) / 100).toFixed(2));
             console.log(`🎯 [OPORTUNIDADE DETECTADA EM ${asset.name}!] RSI: ${rsi.toFixed(1)} | Preço: R$ ${price} | Valor da Ordem: R$ ${buyAmount}`);
 
             const order = await executeRealMarketOrder(asset.symbol, 'BUY', buyAmount, null, asset.decimals, asset.baseAsset);
