@@ -394,36 +394,55 @@ async function startMultiAssetTrader() {
     console.log('===================================================================\n');
   }
 
+  let cryptoHoldingsValue = 0;
+  let activeFoundPosition = null;
+
+  for (const asset of MONITORED_ASSETS) {
+    if (asset.baseAsset === 'USDC' || asset.baseAsset === 'BRL') continue;
+    const qty = balances[asset.baseAsset];
+    if (qty && qty >= asset.minQty) {
+      const curPrice = (await getLivePrice(asset.symbol)) || 1;
+      const val = Number((qty * curPrice).toFixed(2));
+      if (val >= 1.00) {
+        cryptoHoldingsValue += val;
+        if (!activeFoundPosition && val >= 2.00) {
+          activeFoundPosition = {
+            symbol: asset.symbol,
+            assetName: asset.name,
+            baseAsset: asset.baseAsset,
+            decimals: asset.decimals,
+            side: 'LONG',
+            entryPrice: curPrice,
+            qty: qty,
+            notionalBrl: val,
+            orderId: 'LIVE-' + Date.now(),
+            openedAt: new Date().toLocaleTimeString('pt-BR')
+          };
+        }
+      }
+    }
+  }
+
   const usdcPrice = (await getLivePrice('USDCBRL')) || 5.24;
   const usdcTotal = balances.USDC || balances.LDUSDC || 0;
-  const totalBrlEquivalent = (balances.brlFree || 0) + (usdcTotal * usdcPrice);
-  console.log(`[PATRIMÔNIO REAL]: R$ ${(balances.brlFree || 0).toFixed(2)} BRL livres + ${usdcTotal.toFixed(4)} USDC (~R$ ${(usdcTotal * usdcPrice).toFixed(2)}) = Total R$ ${totalBrlEquivalent.toFixed(2)}`);
+  const totalBrlEquivalent = (balances.brlFree || 0) + (usdcTotal * usdcPrice) + cryptoHoldingsValue;
+  console.log(`[PATRIMÔNIO REAL]: R$ ${(balances.brlFree || 0).toFixed(2)} BRL livres + ${usdcTotal.toFixed(4)} USDC (~R$ ${(usdcTotal * usdcPrice).toFixed(2)}) + Cripto R$ ${cryptoHoldingsValue.toFixed(2)} = Total R$ ${totalBrlEquivalent.toFixed(2)}`);
 
   ecosystemState.realBalances = {
     ...balances,
     usdcTotal,
-    usdcBrlValue: Number((usdcTotal * usdcPrice).toFixed(2))
+    usdcBrlValue: Number((usdcTotal * usdcPrice).toFixed(2)),
+    cryptoHoldingsValue: Number(cryptoHoldingsValue.toFixed(2))
   };
   ecosystemState.totalDepositedCapital = Number(totalBrlEquivalent.toFixed(2));
-  ecosystemState.activeBots[0].currentCapital = Number((balances.brlFree || 5.13).toFixed(2));
 
-  // Se já tiver Bitcoin em carteira (ordem anterior aberta):
-  if (balances.BTC && balances.BTC >= 0.00001) {
-    const curBtc = (await getLivePrice('BTCBRL')) || 440782;
-    const valBrl = balances.BTC * curBtc;
-    ecosystemState.activeBots[0].openPosition = {
-      symbol: 'BTCBRL',
-      assetName: 'Bitcoin',
-      baseAsset: 'BTC',
-      side: 'LONG',
-      entryPrice: 440782,
-      qty: balances.BTC,
-      decimals: 5,
-      notionalBrl: 8.82,
-      orderId: 2337522095,
-      openedAt: new Date().toLocaleTimeString('pt-BR')
-    };
-    console.log(`[POSIÇÃO ATIVA]: ${balances.BTC} BTC monitorando saída no lucro de 1% a 1.5%!`);
+  if (activeFoundPosition) {
+    ecosystemState.activeBots[0].assignedAsset = activeFoundPosition.symbol.replace('BRL', '/BRL');
+    ecosystemState.activeBots[0].openPosition = activeFoundPosition;
+    ecosystemState.activeBots[0].currentCapital = activeFoundPosition.notionalBrl;
+    console.log(`[POSIÇÃO ATIVA DETECTADA]: ${activeFoundPosition.qty} ${activeFoundPosition.baseAsset} (~R$ ${activeFoundPosition.notionalBrl}) monitorando saída no lucro de 1% a 1.5%!`);
+  } else {
+    ecosystemState.activeBots[0].currentCapital = Number((Math.floor((balances.brlFree || 5.00) * 100) / 100).toFixed(2));
   }
 
   let tickCount = 0;
@@ -446,6 +465,11 @@ async function startMultiAssetTrader() {
       // Analisa cada robô ativo
       for (let i = 0; i < ecosystemState.activeBots.length; i++) {
         const bot = ecosystemState.activeBots[i];
+
+        // Se estiver em pausa de proteção (Circuit Breaker por 2 stops consecutivos), pula a abertura
+        if (bot.circuitBreakerUntil && Date.now() < bot.circuitBreakerUntil) {
+          continue;
+        }
 
         // ---------------------------------------------------------------------
         // SE NÃO TEM POSIÇÃO: ESCANEIA A MELHOR OPORTUNIDADE ENTRE AS MOEDAS
@@ -473,7 +497,7 @@ async function startMultiAssetTrader() {
           if (bestCandidate && bot.currentCapital >= 2.00 && (Date.now() - lastBuyAttempt > 30000)) {
             lastBuyAttempt = Date.now();
             const { asset, rsi, price } = bestCandidate;
-            const buyAmount = Number(Math.min(bot.currentCapital, 10.00).toFixed(2));
+            const buyAmount = Number((Math.floor(Math.min(bot.currentCapital, 10.00) * 100) / 100).toFixed(2));
             console.log(`🎯 [OPORTUNIDADE DETECTADA EM ${asset.name}!] RSI: ${rsi.toFixed(1)} | Preço: R$ ${price} | Valor da Ordem: R$ ${buyAmount}`);
 
             const order = await executeRealMarketOrder(asset.symbol, 'BUY', buyAmount, null, asset.decimals, asset.baseAsset);
@@ -575,6 +599,19 @@ async function startMultiAssetTrader() {
                 ecosystemState.hiveMind.collectiveIQ += 2;
               }
 
+              // Circuit Breaker: Rastreia perdas consecutivas
+              if (finalProfit < 0) {
+                bot.consecutiveLosses = (bot.consecutiveLosses || 0) + 1;
+                if (bot.consecutiveLosses >= 2) {
+                  bot.circuitBreakerUntil = Date.now() + (4 * 3600 * 1000);
+                  const cbMsg = `🛑 [CIRCUIT BREAKER] ${bot.name} atingiu 2 stops consecutivos. Pausado por 4h para proteção do capital!`;
+                  console.log(cbMsg);
+                  ecosystemState.hiveMind.recentInsights.unshift(cbMsg);
+                }
+              } else {
+                bot.consecutiveLosses = 0;
+              }
+
               const sellMsg = `🔴 [VENDA REAL ${pos.assetName}] ${reason}: Lucro no bolso de ${finalProfit >= 0 ? '+' : ''}R$ ${finalProfit.toFixed(2)} | Total Acumulado: R$ ${bot.accumulatedCentsProfit.toFixed(2)}`;
               console.log(sellMsg);
               ecosystemState.hiveMind.recentInsights.unshift(sellMsg);
@@ -591,49 +628,64 @@ async function startMultiAssetTrader() {
               });
 
               // ===============================================================
-              // MULTIPLICAÇÃO: QUANDO OS CENTAVOS SOMADOS ATINGEM +R$ 10,00!
+              // PLANO MESTRE LEAN SWARM (3X RESERVA, REGRA 80/20 & ESCALA DE LOTE)
               // ===============================================================
-              if (bot.accumulatedCentsProfit >= 10.00 || bot.currentCapital >= 20.00) {
-                const profitToSave = 10.00;
-                console.log(`🎉 [META DE +R$ 10,00 ACUMULADA!] Enviando R$ 10 para o Cofre Funding e gerando novo Robô!`);
+              const currentSeed = bot.initialDayCapital || 10.00;
+              const targetToScale = currentSeed * 3; // Regra dos 3x (ex: acumular R$ 30 antes de subir de fase)
 
-                await transferToFundingVault(profitToSave);
+              if (bot.accumulatedCentsProfit >= targetToScale) {
+                const totalHarvest = targetToScale;
+                const vaultShare = totalHarvest * 0.20; // 20% vai para o cofre blindado (USDC + PAXG Ouro)
+                const scaleShare = totalHarvest * 0.80; // 80% vai para acelerar capital operacional
 
-                ecosystemState.masterVaultBalance += profitToSave;
-                ecosystemState.binanceFundingVault += profitToSave;
-                ecosystemState.totalHistoricalProfitSaved += profitToSave;
-                bot.accumulatedVaultProfit = (bot.accumulatedVaultProfit || 0) + profitToSave;
-                bot.accumulatedCentsProfit -= profitToSave;
-                bot.currentCapital = 10.00;
+                bot.accumulatedCentsProfit -= totalHarvest;
+                ecosystemState.masterVaultBalance += vaultShare;
+                ecosystemState.totalHistoricalProfitSaved += vaultShare;
+                bot.accumulatedVaultProfit = (bot.accumulatedVaultProfit || 0) + vaultShare;
 
-                // GERA NOVO ROBÔ PARA OPERAR OUTRA CRIPTO DA CESTA
-                const nextAsset = MONITORED_ASSETS[ecosystemState.activeBots.length % MONITORED_ASSETS.length];
-                const newBotId = `BOT-REAL-0${ecosystemState.activeBots.length + 1}`;
-                const newBot = {
-                  id: newBotId,
-                  name: `Darwin-Multi-0${ecosystemState.activeBots.length + 1}`,
-                  generation: ecosystemState.activeBots.length + 1,
-                  createdAtDay: 1,
-                  assignedAsset: nextAsset.symbol.replace('BRL', '/BRL'),
-                  marketType: 'BINANCE_CRIPTO',
-                  initialDayCapital: 10.00,
-                  currentCapital: 10.00,
-                  dailyPnL: 0.00,
-                  accumulatedCentsProfit: 0.00,
-                  dailyTargetProfit: 10.00,
-                  accumulatedVaultProfit: 0.00,
-                  openPosition: null,
-                  brain: {
-                    iq: bot.brain.iq + 5,
-                    confidenceThreshold: bot.brain.confidenceThreshold + 0.01,
-                    weights: { ...bot.brain.weights }
-                  }
-                };
-                ecosystemState.activeBots.push(newBot);
+                console.log(`🛡️ [COFRE BLINDADO 80/20]: R$ ${vaultShare.toFixed(2)} transferidos para proteção de longo prazo!`);
 
-                const cloneLog = `🧬 [ROBÔ MULTIPLICADO!] ${newBot.name} criado com R$ 10,00 para operar ${nextAsset.name}!`;
-                console.log(cloneLog);
-                ecosystemState.hiveMind.recentInsights.unshift(cloneLog);
+                const MAX_BOTS = 6; // Teto operacional seguro para evitar rate limits da API
+                if (ecosystemState.activeBots.length < MAX_BOTS) {
+                  // Clona novo robô especializado no enxame
+                  const nextAsset = MONITORED_ASSETS[ecosystemState.activeBots.length % MONITORED_ASSETS.length];
+                  const newBot = {
+                    id: `BOT-REAL-0${ecosystemState.activeBots.length + 1}`,
+                    name: `Darwin-Multi-0${ecosystemState.activeBots.length + 1}`,
+                    generation: ecosystemState.activeBots.length + 1,
+                    createdAtDay: 1,
+                    assignedAsset: nextAsset.symbol.replace('BRL', '/BRL'),
+                    marketType: 'BINANCE_CRIPTO',
+                    initialDayCapital: currentSeed,
+                    currentCapital: currentSeed,
+                    dailyPnL: 0.00,
+                    accumulatedCentsProfit: 0.00,
+                    dailyTargetProfit: currentSeed,
+                    accumulatedVaultProfit: 0.00,
+                    openPosition: null,
+                    consecutiveLosses: 0,
+                    brain: {
+                      iq: (bot.brain?.iq || 115) + 5,
+                      confidenceThreshold: (bot.brain?.confidenceThreshold || 0.60) + 0.01,
+                      weights: { ...(bot.brain?.weights || {}) }
+                    }
+                  };
+                  ecosystemState.activeBots.push(newBot);
+
+                  const cloneLog = `🧬 [ENXAME LEAN SWARM] ${newBot.name} ativado com R$ ${currentSeed.toFixed(2)} para operar ${nextAsset.name}!`;
+                  console.log(cloneLog);
+                  ecosystemState.hiveMind.recentInsights.unshift(cloneLog);
+                } else {
+                  // Quando o enxame já tem 6 robôs, o lucro escala a BANCA existente (de 10 para 50, 100, 500)!
+                  const boostPerBot = Number((scaleShare / ecosystemState.activeBots.length).toFixed(2));
+                  ecosystemState.activeBots.forEach((b) => {
+                    b.initialDayCapital += boostPerBot;
+                    b.currentCapital += boostPerBot;
+                  });
+                  const boostLog = `📈 [ESCALA DE BANCA!] Enxame consolidado (6 robôs). Capital operacional elevado em +R$ ${boostPerBot.toFixed(2)} por robô!`;
+                  console.log(boostLog);
+                  ecosystemState.hiveMind.recentInsights.unshift(boostLog);
+                }
               }
 
               await cloudSync.syncEcosystemState(ecosystemState);
