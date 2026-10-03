@@ -353,6 +353,7 @@ const ecosystemState = {
 // 4. MOTOR INTELIGENTE DE SELEÇÃO E SCALPING
 // =============================================================================
 async function startMultiAssetTrader() {
+  const currentIp = await getCurrentPublicIp();
   console.log('===================================================================');
   console.log(' 🚀 NEXUS DARWIN AI - MOTOR MULTI-CRIPTO 100% REAL (SCALPING)');
   console.log('===================================================================');
