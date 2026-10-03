@@ -577,6 +577,58 @@ async function startMultiAssetTrader() {
         }
       }
 
+      // Atualiza o Radar Scanner de Mercado com métricas técnicas (RSI, EMA, Score e Status)
+      const scannerList = [];
+      for (const asset of MONITORED_ASSETS) {
+        if (asset.baseAsset === 'BRL') continue;
+        const h = priceHistories[asset.symbol] || [];
+        const curPrice = h.length > 0 ? h[h.length - 1] : 0;
+        const rsi = h.length >= 10 ? Number(calcRSI(h, 14).toFixed(1)) : 50.0;
+        const ema9 = h.length >= 5 ? calcEMA(h, 9) : curPrice;
+        const ema21 = h.length >= 10 ? calcEMA(h, 21) : curPrice;
+        const trend = ema9 >= ema21 ? 'ALTA' : 'BAIXA';
+
+        const activeBotUsing = ecosystemState.activeBots.find(b =>
+          (b.openPosition && b.openPosition.symbol === asset.symbol) ||
+          b.assignedAsset.includes(asset.baseAsset)
+        );
+
+        let status = '⚪ Monitorando';
+        let badge = 'tag-neutral';
+        let score = 50;
+
+        if (activeBotUsing && activeBotUsing.openPosition) {
+          status = `⚡ Em Trade (${activeBotUsing.name})`;
+          badge = 'tag-trading';
+          score = 95;
+        } else if (rsi < 45 && ema9 >= ema21 * 0.999) {
+          status = '🟢 Oportunidade de Compra';
+          badge = 'tag-buy';
+          score = 88;
+        } else if (rsi < 50) {
+          status = '🟡 Em Sobrevenda';
+          badge = 'tag-watch';
+          score = 72;
+        } else if (rsi > 70) {
+          status = '🔴 Sobrecomprado (Evitar)';
+          badge = 'tag-sell';
+          score = 25;
+        }
+
+        scannerList.push({
+          symbol: asset.symbol,
+          name: asset.name,
+          baseAsset: asset.baseAsset,
+          price: curPrice,
+          rsi,
+          trend,
+          score,
+          status,
+          badge
+        });
+      }
+      ecosystemState.marketScanner = scannerList;
+
       // Analisa cada robô ativo
       for (let i = 0; i < ecosystemState.activeBots.length; i++) {
         const bot = ecosystemState.activeBots[i];

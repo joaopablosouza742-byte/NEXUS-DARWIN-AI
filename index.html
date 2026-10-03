@@ -344,67 +344,210 @@
     <!-- GRID DE TRABALHO: GRÁFICO + PAINEL DE ESCALA LEAN SWARM -->
     <div class="main-workspace-grid">
 
-      <!-- Coluna Esquerda: Gráfico TradingView Oficial -->
+      <!-- Coluna Esquerda: Gráfico TradingView Oficial com Velas e Entrada do Robô -->
       <div style="display: flex; flex-direction: column; gap: 1.35rem;">
+        
+        <!-- SEÇÃO: GRÁFICO DE VELAS (CANDLESTICKS) & ENTRADA DOS ROBÔS -->
         <section class="section-panel">
           <div class="section-header">
             <div class="section-title">
-              <span>📈 Gráfico em Tempo Real dos Ativos do Radar</span>
+              <span>🕯️ Gráfico de Velas (Candlesticks) & Entrada do Robô</span>
+              <span class="badge-live" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">CANDLES AO VIVO</span>
             </div>
             <div style="font-size: 0.76rem; color: var(--text-secondary);">
-              Cotação ao vivo dos pares líquidos em Reais na Binance
+              Acompanhe as velas em tempo real com a linha exata de entrada da IA
             </div>
           </div>
 
-          <!-- Tabs de Moedas -->
-          <div style="display: flex; gap: 0.45rem; margin-bottom: 0.85rem; flex-wrap: wrap;" id="assetChartTabs">
-            <button class="btn btn-primary" onclick="switchChart('BINANCE:BNBBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              🟠 BNB
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:BTCBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              🟡 BTC
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:SOLBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              🟣 SOL
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:ETHBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              🔵 ETH
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:XRPBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              ⚪ XRP
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:DOGEBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              🐶 DOGE
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:SUIBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              💧 SUI
-            </button>
-            <button class="btn" onclick="switchChart('BINANCE:USDCBRL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-              💵 USDC
-            </button>
+          <!-- HUD DO TRADE OPERANDO NO MOMENTO (ENTRADA, VELAS, ALVOS E PNL) -->
+          <div class="candle-hud-panel" id="candleHudPanel">
+            <div class="candle-hud-header">
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <span class="badge-live" style="background: rgba(168, 85, 247, 0.2); color: #c084fc; font-size: 0.72rem;" id="hudBotBadge">● ROBÔ #1 (ALPHA TITANS)</span>
+                <strong style="font-size: 1.05rem;" id="hudPairName">Solana (SOL/BRL)</strong>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 0.72rem; color: var(--text-muted);">PnL Flutuante do Trade:</span>
+                <span style="font-size: 1.1rem; font-weight: 800;" id="hudLivePnL">-0.16% (-R$ 0,03)</span>
+              </div>
+            </div>
+
+            <!-- Métricas Técnicas da Entrada e Alvos -->
+            <div class="candle-hud-metrics-grid">
+              <div class="candle-hud-card">
+                <div class="candle-hud-label">🎯 Entrada do Robô</div>
+                <div class="candle-hud-val text-cyan" id="hudEntryPrice">R$ 626,70</div>
+              </div>
+              <div class="candle-hud-card">
+                <div class="candle-hud-label">🕯️ Preço da Vela Agora</div>
+                <div class="candle-hud-val" id="hudCurrentPrice" style="color: #f8fafc;">R$ 625,70</div>
+              </div>
+              <div class="candle-hud-card">
+                <div class="candle-hud-label">🏆 Alvo de Lucro (+1.5%)</div>
+                <div class="candle-hud-val text-emerald" id="hudTargetPrice">R$ 636,10</div>
+              </div>
+              <div class="candle-hud-card">
+                <div class="candle-hud-label">🛡️ Trailing Stop (+1.0%)</div>
+                <div class="candle-hud-val text-purple" id="hudTrailingPrice">R$ 632,97</div>
+              </div>
+              <div class="candle-hud-card">
+                <div class="candle-hud-label">🛑 Stop Loss (-0.90%)</div>
+                <div class="candle-hud-val text-red" id="hudStopPrice">R$ 621,06</div>
+              </div>
+            </div>
+
+            <!-- Termômetro Visual do Trade: Onde a Vela Atual está em relação à Entrada e ao Alvo -->
+            <div class="candle-gauge-container">
+              <div style="display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: 700;">
+                <span class="text-red">🛑 Stop: <span id="gaugeStopVal">R$ 621,06</span></span>
+                <span class="text-cyan">🎯 Entrada: <span id="gaugeEntryVal">R$ 626,70</span></span>
+                <span class="text-purple">🛡️ Trailing: <span id="gaugeTrailVal">R$ 632,97</span></span>
+                <span class="text-emerald">🏆 Lucro: <span id="gaugeTargetVal">R$ 636,10</span></span>
+              </div>
+              <div class="candle-gauge-track">
+                <div class="candle-gauge-marker" id="candleGaugeMarker" style="left: 45%;" title="Preço Atual da Vela"></div>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: var(--text-muted);">
+                <span>Proteção Ativa</span>
+                <span id="gaugeStatusText" style="color: #38bdf8; font-weight: 600;">Oscilando próximo da entrada</span>
+                <span>Alvo Máximo</span>
+              </div>
+            </div>
           </div>
 
-          <!-- Iframe TradingView Oficial -->
-          <div id="tradingview_chart_container" style="height: 380px; width: 100%; border-radius: 8px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255,255,255,0.08);">
-            <iframe id="tv_iframe" src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE%3ABNBBRL&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=0b0e14&studies=%5B%5D&theme=dark&style=1&timezone=America%2FSao_Paulo&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=br" style="width: 100%; height: 100%; border: none;"></iframe>
+          <!-- Seletores de Par para o Gráfico de Velas -->
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <!-- Tabs de Moedas em Operação e Radar -->
+            <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="assetChartTabs">
+              <button class="btn btn-primary" onclick="selectCandleChart('SOL', 'BINANCE:SOLBRL', 626.70, 636.10, 632.97, 621.06, 'Robô #1 (Alpha Titans)', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+                🟣 Velas SOL (Robô #1)
+              </button>
+              <button class="btn" onclick="selectCandleChart('BNB', 'BINANCE:BNBBRL', 4027.10, 4087.50, 4067.37, 3990.85, 'Robô #2 (Beta Speed)', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+                🟠 Velas BNB (Robô #2)
+              </button>
+              <button class="btn" onclick="selectCandleChart('BTC', 'BINANCE:BTCBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+                🟡 Velas BTC
+              </button>
+              <button class="btn" onclick="selectCandleChart('ETH', 'BINANCE:ETHBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+                🔵 Velas ETH
+              </button>
+              <button class="btn" onclick="selectCandleChart('XRP', 'BINANCE:XRPBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+                ⚪ Velas XRP
+              </button>
+              <button class="btn" onclick="selectCandleChart('DOGE', 'BINANCE:DOGEBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+                🐶 Velas DOGE
+              </button>
+            </div>
+
+            <!-- Seletor de Tempo Gráfico das Velas -->
+            <div style="display: flex; gap: 0.3rem;">
+              <button class="btn" onclick="changeInterval('1', this)" style="padding: 0.25rem 0.55rem; font-size: 0.70rem;">1m</button>
+              <button class="btn btn-primary" onclick="changeInterval('5', this)" style="padding: 0.25rem 0.55rem; font-size: 0.70rem;">5m</button>
+              <button class="btn" onclick="changeInterval('15', this)" style="padding: 0.25rem 0.55rem; font-size: 0.70rem;">15m</button>
+              <button class="btn" onclick="changeInterval('60', this)" style="padding: 0.25rem 0.55rem; font-size: 0.70rem;">1h</button>
+            </div>
+          </div>
+
+          <!-- Iframe TradingView Oficial em Modo Velas Japonesas (Style=1) -->
+          <div id="tradingview_chart_container" style="height: 400px; width: 100%; border-radius: 8px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255,255,255,0.08);">
+            <iframe id="tv_iframe" src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=BINANCE%3ASOLBRL&interval=5&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=0b0e14&studies=%5B%5D&theme=dark&style=1&timezone=America%2FSao_Paulo&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=br" style="width: 100%; height: 100%; border: none;"></iframe>
           </div>
         </section>
 
-        <!-- Feed de Ordens Executadas -->
+        <!-- SEÇÃO: RADAR & SCANNER MULTI-CRIPTO (POSSÍVEIS INVESTIMENTOS) -->
         <section class="section-panel">
           <div class="section-header">
             <div class="section-title">
-              <span>⚡ Feed de Ordens Reais da Binance</span>
+              <span>📡 Radar & Scanner Multi-Cripto (Possíveis Investimentos)</span>
+              <span class="badge-live" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">16 PARES BRL</span>
             </div>
             <div style="font-size: 0.76rem; color: var(--text-secondary);">
-              Histórico das compras e vendas executadas com ID real da Binance
+              Varredura de sobrevenda, tendências EMA e pontuação da IA para próximas entradas
             </div>
           </div>
 
-          <div class="trades-feed-list" id="liveTradesFeed">
-            <!-- Preenchido pelo app.js -->
+          <div class="scanner-table-wrapper">
+            <table class="scanner-table">
+              <thead>
+                <tr>
+                  <th>Criptoativo</th>
+                  <th>Cotação Agora</th>
+                  <th>RSI (14)</th>
+                  <th>Tendência EMA</th>
+                  <th>Score IA</th>
+                  <th>Status do Robô</th>
+                  <th>Ação</th>
+                </tr>
+              </thead>
+              <tbody id="scannerTableBody">
+                <!-- Preenchido dinamicamente pelo app.js -->
+              </tbody>
+            </table>
           </div>
         </section>
+
+        <!-- SEÇÃO: LIVRO DE ORDENS EM TEMPO REAL & HISTÓRICO DE TRADES COM LUCROS/PREJUÍZOS -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title">
+              <span>⚡ Ordens de Compra e Venda em Tempo Real (PnL Binance)</span>
+              <span class="badge-live" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">SPOT AUDITADO</span>
+            </div>
+            <div style="font-size: 0.76rem; color: var(--text-secondary);">
+              Ordens ativas operando agora e histórico de execuções com lucro no bolso
+            </div>
+          </div>
+
+          <!-- Tabela de Ordens Ativas (Compradas operando agora) -->
+          <div style="font-size: 0.76rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span>🟢 POSIÇÕES & ORDENS ABERTAS AGORA:</span>
+          </div>
+          <div class="scanner-table-wrapper" style="margin-bottom: 1.25rem;">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>Robô / Ordem</th>
+                  <th>Par / Ativo</th>
+                  <th>Tipo</th>
+                  <th>Preço Entrada</th>
+                  <th>Capital Alocado</th>
+                  <th>Cotação Agora</th>
+                  <th>PnL Flutuante</th>
+                  <th>Alvo / Stop</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="openOrdersTableBody">
+                <!-- Preenchido pelo app.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Tabela de Histórico de Execuções -->
+          <div style="font-size: 0.76rem; font-weight: 700; color: var(--text-secondary); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span>📋 HISTÓRICO DE ORDENS EXECUTADAS (LUCROS/PREJUÍZOS REALIZADOS):</span>
+          </div>
+          <div class="scanner-table-wrapper">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>Horário</th>
+                  <th>Robô / ID Binance</th>
+                  <th>Par</th>
+                  <th>Operação</th>
+                  <th>Preço Executado</th>
+                  <th>Volume (R$)</th>
+                  <th>Resultado / PnL</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="closedOrdersTableBody">
+                <!-- Preenchido pelo app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
       </div>
 
       <!-- Coluna Direita: Métricas de Escala Lean Swarm & Cérebro IA -->
