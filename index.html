@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NEXUS DARWIN — Terminal Quantitativo Binance Real</title>
-  <link rel="stylesheet" href="styles.css?v=3.0.0" />
+  <link rel="stylesheet" href="styles.css?v=4.0.0" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
@@ -44,6 +44,14 @@
         <span style="color: #10b981; font-weight: 700;">🟢 PC CONECTADO</span>
         <span style="color: var(--text-muted);">| IP: 45.226.119.107</span>
       </div>
+
+      <button class="btn" style="background: rgba(14, 165, 233, 0.15); border: 1px solid rgba(14, 165, 233, 0.4); color: #38bdf8; font-weight: 700; font-size: 0.78rem; padding: 0.45rem 0.95rem; border-radius: var(--radius-sm); cursor: pointer; display: inline-flex; align-items: center; gap: 0.45rem;" id="btnTelegramModal" onclick="openTelegramModal()" title="Configurar Alertas e Controle Remoto no Celular via Telegram">
+        📱 Telegram Bot
+      </button>
+
+      <button class="btn btn-shutdown-action" id="btnSafeShutdown" onclick="openSafeShutdownModal()" title="Encerrar operações sem perdas e autorizar desligamento seguro do PC">
+        🛑 Quero Encerrar (Desligar PC)
+      </button>
 
       <button class="btn btn-primary" id="btnRefreshRealState" onclick="location.reload()" title="Atualizar dados em tempo real">
         🔄 Atualizar
@@ -222,6 +230,94 @@
       </div>
     </section>
 
+    <!-- ===================================================================== -->
+    <!-- CARD MESTRE CONSOLIDADO: LUCRO LÍQUIDO REALIZADO (COMPRAS & VENDAS)  -->
+    <!-- ===================================================================== -->
+    <section class="net-profit-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(56, 189, 248, 0.08) 100%); border: 1.5px solid rgba(16, 185, 129, 0.45); border-radius: var(--radius-lg); padding: 1.35rem 1.6rem; margin-bottom: 1.5rem; box-shadow: 0 10px 35px rgba(16, 185, 129, 0.12);">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.85rem; margin-bottom: 1rem;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.35rem;">💰</span>
+          <div>
+            <div style="font-size: 0.88rem; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.05em;">
+              EXTRATO FINANCEIRO CONSOLIDADO • LUCROS & PERDAS REAIS (COMPRA E VENDA)
+            </div>
+            <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;">
+              Soma matemática direta de cada ordem executada e finalizada pelos robôs na Binance
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-size: 0.70rem;">100% AUDITADO REST API</span>
+          <span style="font-size: 0.74rem; color: var(--text-muted);" id="consolidatedTradesBadge">Carregando ordens...</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1.3fr 1fr 1fr 1.1fr; gap: 1rem; align-items: stretch;" class="profit-summary-grid">
+        
+        <!-- 1. RESULTADO LÍQUIDO: GRANDE, VERDE, CAIXA ALTA -->
+        <div style="background: rgba(0, 0, 0, 0.35); padding: 1.15rem 1.25rem; border-radius: var(--radius-md); border-left: 5px solid #10b981; display: flex; flex-direction: column; justify-content: center;">
+          <div style="font-size: 0.72rem; color: #10b981; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.25rem;">
+            LUCRO LÍQUIDO REAL NO BOLSO
+          </div>
+          <div id="netProfitDisplay" style="font-size: 2.15rem; font-weight: 900; color: #10b981; line-height: 1.1; letter-spacing: -0.02em;">
+            +R$ 0,00
+          </div>
+          <div style="font-size: 0.70rem; font-weight: 800; color: #34d399; margin-top: 0.4rem; text-transform: uppercase; letter-spacing: 0.04em;" id="netProfitStatusText">
+            DINHEIRO REAL GANHO LÍQUIDO NA CONTA
+          </div>
+        </div>
+
+        <!-- 2. ORDENS SOMADAS EM AZUL POSITIVO -->
+        <div style="background: rgba(56, 189, 248, 0.06); padding: 1.1rem 1.15rem; border-radius: var(--radius-md); border: 1px solid rgba(56, 189, 248, 0.25); display: flex; flex-direction: column; justify-content: center;">
+          <div style="font-size: 0.68rem; color: #38bdf8; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;">
+            🔵 ORDENS COM LUCRO BRUTO
+          </div>
+          <div id="positiveOrdersDisplay" style="font-size: 1.45rem; font-weight: 800; color: #38bdf8; line-height: 1.2;">
+            +R$ 0,00
+          </div>
+          <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 0.35rem;" id="positiveOrdersDetails">
+            Soma de todas as vendas vencedoras
+          </div>
+        </div>
+
+        <!-- 3. ORDENS SOMADAS EM VERMELHO PEQUENO -->
+        <div style="background: rgba(239, 68, 68, 0.06); padding: 1.1rem 1.15rem; border-radius: var(--radius-md); border: 1px solid rgba(239, 68, 68, 0.25); display: flex; flex-direction: column; justify-content: center;">
+          <div style="font-size: 0.68rem; color: #f87171; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;">
+            🔴 ORDENS DE AJUSTE / SPREAD
+          </div>
+          <div id="negativeOrdersDisplay" style="font-size: 1.15rem; font-weight: 800; color: #ef4444; line-height: 1.2;">
+            -R$ 0,00
+          </div>
+          <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 0.35rem;" id="negativeOrdersDetails">
+            Soma de spreads e oscilações
+          </div>
+        </div>
+
+        <!-- 4. TAXAS DE CORRETAGEM DA BINANCE (TRANSPARÊNCIA TOTAL) -->
+        <div style="background: rgba(245, 158, 11, 0.06); padding: 1.1rem 1.15rem; border-radius: var(--radius-md); border: 1px solid rgba(245, 158, 11, 0.25); display: flex; flex-direction: column; justify-content: center;">
+          <div style="font-size: 0.68rem; color: #f59e0b; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem;">
+            ⚡ TAXAS PAGAS À BINANCE
+          </div>
+          <div id="binanceFeesDisplay" style="font-size: 1.25rem; font-weight: 800; color: #f59e0b; line-height: 1.2;">
+            -R$ 0,00
+          </div>
+          <div style="font-size: 0.68rem; color: #94a3b8; margin-top: 0.35rem;" id="binanceFeesDetails">
+            0,10% taxa Spot (já descontadas)
+          </div>
+        </div>
+
+      </div>
+
+      <!-- AVISO DE TRANSPARÊNCIA DE TAXAS & ALVO DE +R$ 0,10 -->
+      <div style="margin-top: 0.85rem; padding: 0.65rem 0.95rem; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: space-between; font-size: 0.74rem;">
+        <div style="color: #cbd5e1; display: flex; align-items: center; gap: 0.5rem;">
+          <span style="font-size: 1rem;">🛡️</span>
+          <span><strong>Blindagem contra Taxas Ativada:</strong> A Binance cobra ~0,10% na compra e ~0,10% na venda (~R$ 0,038 por trade). O robô só realiza a venda quando o preço sobe o suficiente para pagar todas as taxas e garantir no mínimo <strong>+R$ 0,10 limpos no seu bolso</strong>.</span>
+        </div>
+        <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; white-space: nowrap;">META: +R$ 0,10 LÍQUIDO</span>
+      </div>
+    </section>
+
     <!-- SEÇÃO: ACOMPANHAMENTO DOS 2 ROBÔS COM PROJEÇÃO E METAS DE LUCRO -->
     <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
       <div>
@@ -229,14 +325,14 @@
           🎯 Acompanhamento & Projeções dos Robôs em Operação
         </h2>
         <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 0.2rem;">
-          Alvos milimétricos de saída no lucro, gatilho do Trailing Stop e proteção anti-ruína
+          Alvos milimétricos de saída no lucro, gatilho do Trailing Stop e proteção anti-ruína (Muda a moeda automaticamente)
         </div>
       </div>
       <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">2 ROBÔS ATIVOS</span>
     </div>
 
     <div class="dual-bots-grid">
-      <!-- CARD ROBÔ #1: ALPHA TITANS (SOLANA) -->
+      <!-- CARD ROBÔ #1: ALPHA TITANS (DINÂMICO) -->
       <div class="bot-projection-card bot-alpha">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
           <div>
@@ -244,32 +340,32 @@
               ● ROBÔ #1 — ALPHA TITANS (GIGANTES)
             </div>
             <div style="font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
-              <span>🟣 Solana (SOL/BRL)</span>
-              <span class="badge-live" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">COMPRADO</span>
+              <span id="alphaAssetTitle">⚡ Robô #1 (Alpha Titans)</span>
+              <span class="badge-live" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;" id="alphaStatusBadge">CARREGANDO...</span>
             </div>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 0.68rem; color: var(--text-muted);">PnL AO VIVO</div>
-            <div style="font-size: 1.2rem; font-weight: 800;" id="alphaLivePnL">-0.16% (-R$ 0,03)</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: #10b981;" id="alphaLivePnL">--</div>
           </div>
         </div>
 
-        <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.6rem;">
-          Capital Alocado: <strong class="text-purple">R$ 19,40</strong> (0.031 SOL) • Entrada: <strong id="alphaEntryPrice">R$ 626,70</strong>
+        <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.6rem;" id="alphaAllocatedDetails">
+          Capital Alocado: <strong class="text-purple">--</strong> • Entrada: <strong id="alphaEntryPrice">--</strong>
         </div>
 
         <!-- Termômetro de Projeção até a Venda no Lucro -->
         <div style="background: rgba(0,0,0,0.25); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.75rem;">
           <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700;">
-            <span style="color: #c084fc;">🎯 ALVO DE VENDA (TAKE PROFIT +1.5%)</span>
-            <span class="text-emerald" id="alphaTargetPrice">R$ 636,10 (+R$ 0,29 de Lucro)</span>
+            <span style="color: #c084fc;">🎯 ALVO SCALPER (+R$ 0,05 NO BOLSO)</span>
+            <span class="text-emerald" id="alphaTargetPrice">--</span>
           </div>
           <div class="target-progress-track">
             <div class="target-progress-fill" id="alphaProgressFill" style="width: 25%; background: linear-gradient(90deg, #a855f7, #10b981);"></div>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: var(--text-muted); margin-top: 0.3rem;">
-            <span>Preço Agora: <strong id="alphaCurrentPrice" style="color: #f8fafc;">R$ 625,70</strong></span>
-            <span>Distância do Lucro: <strong class="text-cyan" id="alphaDistTarget">1.6% para bater meta</strong></span>
+            <span>Preço Agora: <strong id="alphaCurrentPrice" style="color: #f8fafc;">--</strong></span>
+            <span>Distância do Lucro: <strong class="text-cyan" id="alphaDistTarget">Rastreando cotação ao vivo...</strong></span>
           </div>
         </div>
 
@@ -277,18 +373,18 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.72rem;">
           <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
             <span style="color: var(--text-muted);">🛡️ Trailing Stop Lock:</span><br>
-            <strong class="text-emerald">Ativa em R$ 632,97 (+1.0%)</strong><br>
-            <span style="font-size: 0.66rem; color: var(--text-secondary);">Garante +0.40% no bolso</span>
+            <strong class="text-purple" id="alphaTrailingPrice">--</strong><br>
+            <span style="font-size: 0.66rem; color: var(--text-secondary);">Garante Breakeven (+R$ 0,01)</span>
           </div>
           <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
             <span style="color: var(--text-muted);">🛑 Stop Loss Anti-Ruína:</span><br>
-            <strong class="text-red">R$ 621,06 (-0.90%)</strong><br>
+            <strong class="text-red" id="alphaStopPrice">--</strong><br>
             <span style="font-size: 0.66rem; color: var(--text-secondary);">Corta perda se reverter</span>
           </div>
         </div>
       </div>
 
-      <!-- CARD ROBÔ #2: BETA SPEED (BNB) -->
+      <!-- CARD ROBÔ #2: BETA SPEED (VELOCIDADE) -->
       <div class="bot-projection-card bot-beta">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
           <div>
@@ -296,32 +392,32 @@
               ● ROBÔ #2 — BETA SPEED (VELOCIDADE)
             </div>
             <div style="font-size: 1.25rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-top: 0.2rem;">
-              <span>🟠 Binance Coin (BNB/BRL)</span>
-              <span class="badge-live" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">COMPRADO</span>
+              <span id="betaAssetTitle">⚡ Robô #2 (Beta Speed)</span>
+              <span class="badge-live" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8;" id="betaStatusBadge">CARREGANDO...</span>
             </div>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 0.68rem; color: var(--text-muted);">PnL AO VIVO</div>
-            <div style="font-size: 1.2rem; font-weight: 800; color: #10b981;" id="betaLivePnL">+0.05% (+R$ 0,01)</div>
+            <div style="font-size: 1.2rem; font-weight: 800; color: #10b981;" id="betaLivePnL">--</div>
           </div>
         </div>
 
-        <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.6rem;">
-          Capital Alocado: <strong class="text-amber">R$ 5,01</strong> (0.00124 BNB) • Entrada: <strong id="betaEntryPrice">R$ 4.027,10</strong>
+        <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.6rem;" id="betaAllocatedDetails">
+          Capital Alocado: <strong class="text-cyan">--</strong> • Entrada: <strong id="betaEntryPrice">--</strong>
         </div>
 
         <!-- Termômetro de Projeção até a Venda no Lucro -->
         <div style="background: rgba(0,0,0,0.25); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 0.75rem;">
           <div style="display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700;">
-            <span style="color: #fbbf24;">🎯 ALVO DE VENDA (TAKE PROFIT +1.5%)</span>
-            <span class="text-emerald" id="betaTargetPrice">R$ 4.087,50 (+R$ 0,08 de Lucro)</span>
+            <span style="color: #fbbf24;">🎯 ALVO SCALPER (+R$ 0,05 NO BOLSO)</span>
+            <span class="text-emerald" id="betaTargetPrice">--</span>
           </div>
           <div class="target-progress-track">
             <div class="target-progress-fill" id="betaProgressFill" style="width: 45%; background: linear-gradient(90deg, #f59e0b, #10b981);"></div>
           </div>
           <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: var(--text-muted); margin-top: 0.3rem;">
-            <span>Preço Agora: <strong id="betaCurrentPrice" style="color: #f8fafc;">R$ 4.029,00</strong></span>
-            <span>Distância do Lucro: <strong class="text-emerald" id="betaDistTarget">1.4% para bater meta</strong></span>
+            <span>Preço Agora: <strong id="betaCurrentPrice" style="color: #f8fafc;">--</strong></span>
+            <span>Distância do Lucro: <strong class="text-emerald" id="betaDistTarget">Rastreando cotação ao vivo...</strong></span>
           </div>
         </div>
 
@@ -329,12 +425,12 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.72rem;">
           <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
             <span style="color: var(--text-muted);">🛡️ Trailing Stop Lock:</span><br>
-            <strong class="text-emerald">Ativa em R$ 4.067,37 (+1.0%)</strong><br>
-            <span style="font-size: 0.66rem; color: var(--text-secondary);">Garante +0.40% no bolso</span>
+            <strong class="text-purple" id="betaTrailingPrice">--</strong><br>
+            <span style="font-size: 0.66rem; color: var(--text-secondary);">Garante Breakeven (+R$ 0,01)</span>
           </div>
           <div style="background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 6px;">
             <span style="color: var(--text-muted);">🛑 Stop Loss Anti-Ruína:</span><br>
-            <strong class="text-red">R$ 3.990,85 (-0.90%)</strong><br>
+            <strong class="text-red" id="betaStopPrice">--</strong><br>
             <span style="font-size: 0.66rem; color: var(--text-secondary);">Corta perda se reverter</span>
           </div>
         </div>
@@ -376,63 +472,60 @@
             <div class="candle-hud-metrics-grid">
               <div class="candle-hud-card">
                 <div class="candle-hud-label">🎯 Entrada do Robô</div>
-                <div class="candle-hud-val text-cyan" id="hudEntryPrice">R$ 626,70</div>
+                <div class="candle-hud-val text-cyan" id="hudEntryPrice">--</div>
               </div>
               <div class="candle-hud-card">
                 <div class="candle-hud-label">🕯️ Preço da Vela Agora</div>
-                <div class="candle-hud-val" id="hudCurrentPrice" style="color: #f8fafc;">R$ 625,70</div>
+                <div class="candle-hud-val" id="hudCurrentPrice" style="color: #f8fafc;">--</div>
               </div>
               <div class="candle-hud-card">
-                <div class="candle-hud-label">🏆 Alvo de Lucro (+1.5%)</div>
-                <div class="candle-hud-val text-emerald" id="hudTargetPrice">R$ 636,10</div>
+                <div class="candle-hud-label">🏆 Alvo de Lucro (+R$ 0,05)</div>
+                <div class="candle-hud-val text-emerald" id="hudTargetPrice">--</div>
               </div>
               <div class="candle-hud-card">
-                <div class="candle-hud-label">🛡️ Trailing Stop (+1.0%)</div>
-                <div class="candle-hud-val text-purple" id="hudTrailingPrice">R$ 632,97</div>
+                <div class="candle-hud-label">🛡️ Trailing Stop (+R$ 0,03)</div>
+                <div class="candle-hud-val text-purple" id="hudTrailingPrice">--</div>
               </div>
               <div class="candle-hud-card">
-                <div class="candle-hud-label">🛑 Stop Loss (-0.90%)</div>
-                <div class="candle-hud-val text-red" id="hudStopPrice">R$ 621,06</div>
+                <div class="candle-hud-label">🛑 Stop Loss Curto (-R$ 0,06)</div>
+                <div class="candle-hud-val text-red" id="hudStopPrice">--</div>
               </div>
             </div>
 
             <!-- Termômetro Visual do Trade: Onde a Vela Atual está em relação à Entrada e ao Alvo -->
             <div class="candle-gauge-container">
               <div style="display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: 700;">
-                <span class="text-red">🛑 Stop: <span id="gaugeStopVal">R$ 621,06</span></span>
-                <span class="text-cyan">🎯 Entrada: <span id="gaugeEntryVal">R$ 626,70</span></span>
-                <span class="text-purple">🛡️ Trailing: <span id="gaugeTrailVal">R$ 632,97</span></span>
-                <span class="text-emerald">🏆 Lucro: <span id="gaugeTargetVal">R$ 636,10</span></span>
+                <span class="text-red">🛑 Stop: <span id="gaugeStopVal">--</span></span>
+                <span class="text-cyan">🎯 Entrada: <span id="gaugeEntryVal">--</span></span>
+                <span class="text-purple">🛡️ Trailing: <span id="gaugeTrailVal">--</span></span>
+                <span class="text-emerald">🏆 Lucro: <span id="gaugeTargetVal">--</span></span>
               </div>
               <div class="candle-gauge-track">
                 <div class="candle-gauge-marker" id="candleGaugeMarker" style="left: 45%;" title="Preço Atual da Vela"></div>
               </div>
               <div style="display: flex; justify-content: space-between; font-size: 0.66rem; color: var(--text-muted);">
-                <span>Proteção Ativa</span>
-                <span id="gaugeStatusText" style="color: #38bdf8; font-weight: 600;">Oscilando próximo da entrada</span>
-                <span>Alvo Máximo</span>
+                <span>Proteção Ativa (-R$ 0,06)</span>
+                <span id="gaugeStatusText" style="color: #38bdf8; font-weight: 600;">Oscilando rumo aos +5 centavos</span>
+                <span>Meta (+R$ 0,05)</span>
               </div>
             </div>
           </div>
 
           <!-- Seletores de Par para o Gráfico de Velas -->
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem;">
-            <!-- Tabs de Moedas em Operação e Radar -->
+            <!-- Tabs de Moedas em Operação e Radar (Atualizadas em tempo real pelo app.js) -->
             <div style="display: flex; gap: 0.4rem; flex-wrap: wrap;" id="assetChartTabs">
-              <button class="btn btn-primary" onclick="selectCandleChart('SOL', 'BINANCE:SOLBRL', 626.70, 636.10, 632.97, 621.06, 'Robô #1 (Alpha Titans)', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              <button class="btn btn-primary" onclick="selectCandleChart('SOL', 'BINANCE:SOLBRL', null, null, null, null, 'Robô #1 (Alpha Titans)', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
                 🟣 Velas SOL (Robô #1)
               </button>
-              <button class="btn" onclick="selectCandleChart('BNB', 'BINANCE:BNBBRL', 4027.10, 4087.50, 4067.37, 3990.85, 'Robô #2 (Beta Speed)', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-                🟠 Velas BNB (Robô #2)
+              <button class="btn" onclick="selectCandleChart('ETH', 'BINANCE:ETHBRL', null, null, null, null, 'Robô #2 (Beta Speed)', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+                🔵 Velas ETH (Robô #2)
               </button>
               <button class="btn" onclick="selectCandleChart('BTC', 'BINANCE:BTCBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
                 🟡 Velas BTC
               </button>
-              <button class="btn" onclick="selectCandleChart('ETH', 'BINANCE:ETHBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-                🔵 Velas ETH
-              </button>
               <button class="btn" onclick="selectCandleChart('XRP', 'BINANCE:XRPBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
-                ⚪ Velas XRP
+                🟢 Velas XRP
               </button>
               <button class="btn" onclick="selectCandleChart('DOGE', 'BINANCE:DOGEBRL', null, null, null, null, 'Radar de Mercado', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
                 🐶 Velas DOGE
@@ -472,8 +565,10 @@
                 <tr>
                   <th>Criptoativo</th>
                   <th>Cotação Agora</th>
-                  <th>RSI (14)</th>
+                  <th>RSI (5M)</th>
                   <th>Tendência EMA</th>
+                  <th>Canal 7D</th>
+                  <th>Fluxo Comprador (24h)</th>
                   <th>Score IA</th>
                   <th>Status do Robô</th>
                   <th>Ação</th>
@@ -551,7 +646,154 @@
       </div>
 
       <!-- Coluna Direita: Métricas de Escala Lean Swarm & Cérebro IA -->
-      <div style="display: flex; flex-direction: column; gap: 1.35rem;">
+        <!-- ============================================================= -->
+        <!-- SEÇÃO: CALCULADORA & SIMULADOR DE SCALPING POR CRIPTO         -->
+        <!-- ============================================================= -->
+        <section class="section-panel" style="border: 1.5px solid rgba(16, 185, 129, 0.4); background: linear-gradient(145deg, rgba(16, 185, 129, 0.06), rgba(15, 23, 42, 0.95));">
+          <div class="section-header">
+            <div class="section-title">
+              <span>🧮 Simulador de Lucros & Aporte em Tempo Real</span>
+            </div>
+            <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">API BINANCE AO VIVO</span>
+          </div>
+
+          <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
+            Selecione a moeda e veja na hora <strong>quanto precisa aportar</strong> ou <strong>quanto vai lucrar</strong> em cada mini-oscilação de centavos.
+          </div>
+
+          <!-- Seletor de Criptomoeda -->
+          <div style="margin-bottom: 0.85rem;">
+            <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-bottom: 0.35rem;">
+              Escolha a Criptomoeda:
+            </label>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <select id="simCoinSelect" style="flex: 1; background: rgba(15, 23, 42, 0.9); color: #f8fafc; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: var(--radius-sm); padding: 0.55rem 0.75rem; font-size: 0.82rem; font-weight: 700; outline: none; cursor: pointer;">
+                <option value="SOLBRL" data-coin="SOL" selected>🟣 Solana (SOL/BRL)</option>
+                <option value="LTCBRL" data-coin="LTC">🪙 Litecoin (LTC/BRL)</option>
+                <option value="ETHBRL" data-coin="ETH">🔵 Ethereum (ETH/BRL)</option>
+                <option value="BTCBRL" data-coin="BTC">🟠 Bitcoin (BTC/BRL)</option>
+                <option value="BNBBRL" data-coin="BNB">🟡 Binance Coin (BNB/BRL)</option>
+                <option value="XRPBRL" data-coin="XRP">🟢 Ripple (XRP/BRL)</option>
+                <option value="DOGEBRL" data-coin="DOGE">🐶 Dogecoin (DOGE/BRL)</option>
+                <option value="ADABRL" data-coin="ADA">🔷 Cardano (ADA/BRL)</option>
+                <option value="SUIBRL" data-coin="SUI">💧 Sui (SUI/BRL)</option>
+                <option value="LINKBRL" data-coin="LINK">🔗 Chainlink (LINK/BRL)</option>
+                <option value="AVAXBRL" data-coin="AVAX">🔺 Avalanche (AVAX/BRL)</option>
+                <option value="NEARBRL" data-coin="NEAR">🌐 NEAR Protocol (NEAR/BRL)</option>
+                <option value="PEPEBRL" data-coin="PEPE">🐸 Pepe (PEPE/BRL)</option>
+              </select>
+              <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); padding: 0.45rem 0.65rem; border-radius: var(--radius-sm); text-align: right; min-width: 110px;">
+                <div style="font-size: 0.64rem; color: var(--text-muted);">Cotação Agora:</div>
+                <div style="font-size: 0.85rem; font-weight: 800; color: #38bdf8;" id="simCurPriceDisplay">R$ 627,10</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Abas de Modo de Simulação -->
+          <div style="display: flex; gap: 0.35rem; margin-bottom: 0.85rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 0.5rem;">
+            <button class="btn btn-primary" id="simTabModeGoal" onclick="switchSimMode('goal')" style="padding: 0.35rem 0.65rem; font-size: 0.72rem; flex: 1;">
+              🎯 Quanto Quero Ganhar?
+            </button>
+            <button class="btn" id="simTabModeCapital" onclick="switchSimMode('capital')" style="padding: 0.35rem 0.65rem; font-size: 0.72rem; flex: 1;">
+              💰 Se Eu Aportar R$ X?
+            </button>
+          </div>
+
+          <!-- MODO 1: QUANTO QUERO GANHAR (Calcula o aporte necessário) -->
+          <div id="simModeGoalContainer">
+            <div style="margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                <span style="font-size: 0.70rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Lucro Desejado por Trade:</span>
+                <span style="font-size: 0.85rem; font-weight: 800; color: #10b981;" id="simTargetProfitLabel">+R$ 0,10</span>
+              </div>
+              <!-- Chips rápidos de Lucro -->
+              <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.45rem;">
+                <button type="button" class="sim-chip" onclick="setSimProfit(0.05)">+R$ 0,05</button>
+                <button type="button" class="sim-chip active" onclick="setSimProfit(0.10)">+R$ 0,10</button>
+                <button type="button" class="sim-chip" onclick="setSimProfit(0.25)">+R$ 0,25</button>
+                <button type="button" class="sim-chip" onclick="setSimProfit(0.50)">+R$ 0,50</button>
+                <button type="button" class="sim-chip" onclick="setSimProfit(1.00)">+R$ 1,00</button>
+              </div>
+              <input type="number" id="simTargetProfitInput" value="0.10" step="0.05" min="0.01" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; color: #10b981; font-weight: 800; font-size: 0.82rem;" oninput="updateSimulator()" />
+            </div>
+
+            <div style="margin-bottom: 0.85rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                <span style="font-size: 0.70rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Oscilação da Moeda (Subida):</span>
+                <span style="font-size: 0.85rem; font-weight: 800; color: #38bdf8;" id="simOscLabel">+0.05%</span>
+              </div>
+              <!-- Chips rápidos de oscilação -->
+              <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.45rem;">
+                <button type="button" class="sim-osc-chip" onclick="setSimOsc(0.03)">0.03% (Micro)</button>
+                <button type="button" class="sim-osc-chip active" onclick="setSimOsc(0.05)">0.05% (Padrão)</button>
+                <button type="button" class="sim-osc-chip" onclick="setSimOsc(0.10)">0.10% (Rápido)</button>
+                <button type="button" class="sim-osc-chip" onclick="setSimOsc(0.25)">0.25% (Normal)</button>
+              </div>
+              <input type="range" id="simOscSlider" min="0.01" max="0.50" step="0.01" value="0.05" style="width: 100%; cursor: pointer;" oninput="onSimSliderChange(this.value)" />
+            </div>
+
+            <!-- CARD DE RESULTADO DO MODO 1 -->
+            <div style="background: rgba(0, 0, 0, 0.45); border-left: 4px solid #10b981; border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 0.75rem;">
+              <div style="font-size: 0.68rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+                Aporte Necessário na Ordem:
+              </div>
+              <div style="font-size: 1.85rem; font-weight: 900; color: #10b981; line-height: 1.1; margin: 0.2rem 0;" id="simResultCapital">
+                R$ 200,00
+              </div>
+              <div style="font-size: 0.72rem; color: #94a3b8;" id="simResultDetail">
+                Para essa subida de <strong>0.05%</strong> gerar <strong>+R$ 0,10 limpos</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- MODO 2: SE EU APORTAR R$ X (Calcula o lucro gerado) -->
+          <div id="simModeCapitalContainer" style="display: none;">
+            <div style="margin-bottom: 0.75rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
+                <span style="font-size: 0.70rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Capital que você quer Aportar:</span>
+                <span style="font-size: 0.85rem; font-weight: 800; color: #38bdf8;" id="simCapitalLabel">R$ 100,00</span>
+              </div>
+              <!-- Chips rápidos de Capital -->
+              <div style="display: flex; gap: 0.3rem; flex-wrap: wrap; margin-bottom: 0.45rem;">
+                <button type="button" class="sim-cap-chip" onclick="setSimCapital(19.42)">R$ 19,42 (Atual)</button>
+                <button type="button" class="sim-cap-chip" onclick="setSimCapital(50)">R$ 50</button>
+                <button type="button" class="sim-cap-chip active" onclick="setSimCapital(100)">R$ 100</button>
+                <button type="button" class="sim-cap-chip" onclick="setSimCapital(200)">R$ 200</button>
+                <button type="button" class="sim-cap-chip" onclick="setSimCapital(500)">R$ 500</button>
+              </div>
+              <input type="number" id="simCapitalInput" value="100" step="10" min="5" style="width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-sm); padding: 0.4rem 0.6rem; color: #38bdf8; font-weight: 800; font-size: 0.82rem;" oninput="updateSimulator()" />
+            </div>
+
+            <!-- CARD DE RESULTADO DO MODO 2 -->
+            <div style="background: rgba(0, 0, 0, 0.45); border-left: 4px solid #38bdf8; border-radius: var(--radius-sm); padding: 0.85rem 1rem; margin-bottom: 0.75rem;">
+              <div style="font-size: 0.68rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">
+                Lucro por Micro-Oscilação (0.05%):
+              </div>
+              <div style="font-size: 1.85rem; font-weight: 900; color: #38bdf8; line-height: 1.1; margin: 0.2rem 0;" id="simResultProfitFromCap">
+                +R$ 0,05
+              </div>
+              <div style="font-size: 0.72rem; color: #94a3b8;" id="simResultProfitDetail">
+                No Trailing (0.03%): <strong class="text-purple" id="simProfitTrail">+R$ 0,03</strong> • No Alvo (+R$ 0,25%): <strong class="text-emerald" id="simProfitAlvo">+R$ 0,25</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- DETALHES TÉCNICOS DO MOVIMENTO DO PREÇO DA MOEDA -->
+          <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; font-size: 0.72rem; display: flex; flex-direction: column; gap: 0.4rem;">
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Quanto a moeda precisa subir em R$:</span>
+              <strong style="color: #38bdf8;" id="simPriceDeltaText">+R$ 0,31 no preço</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Preço de Saída Estimado:</span>
+              <strong style="color: #10b981;" id="simTargetExitPrice">R$ 627,41</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span style="color: var(--text-muted);">Projeção com 20 trades/dia:</span>
+              <strong style="color: #fbbf24;" id="simDailyProjection">R$ 2,00 por dia</strong>
+            </div>
+          </div>
+        </section>
 
         <!-- Painel Lean Swarm: Regra dos 3x & Divisão 80/20 -->
         <section class="section-panel" style="border: 1px solid rgba(56, 189, 248, 0.3);">
@@ -588,6 +830,51 @@
           </div>
         </section>
 
+        <!-- Painel Central Estratégica Groq (LPU 120B) & Sentimento Macro -->
+        <section class="section-panel" style="border: 1px solid rgba(56, 189, 248, 0.4); background: linear-gradient(145deg, rgba(14, 25, 45, 0.9), rgba(10, 16, 30, 0.95));">
+          <div class="section-header">
+            <div class="section-title">
+              <span>🧠 Central Estratégica da IA (Grok & Groq)</span>
+            </div>
+            <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: rgba(16, 185, 129, 0.4);" id="grokStatusBadge">
+              ● IA CONECTADA (GROQ LPU & GROK)
+            </span>
+          </div>
+
+          <!-- Diagnóstico em Destaque -->
+          <div style="background: rgba(0, 0, 0, 0.35); padding: 0.85rem; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+              <span style="font-size: 0.70rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;" id="grokProviderLabel">
+                🎙️ Parecer Estratégico da IA (Groq LPU / Grok xAI)
+              </span>
+              <span style="font-size: 0.68rem; color: var(--text-muted);" id="grokUpdatedTime">Atualizado em tempo real</span>
+            </div>
+            <div style="font-size: 0.80rem; line-height: 1.5; color: #f1f5f9;" id="grokAdviceText">
+              Carregando parecer estratégico da IA Groq em velocidade máxima...
+            </div>
+          </div>
+
+          <!-- Grade de Parâmetros Sugeridos pelo Grok -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.72rem;">
+            <div style="background: rgba(255, 255, 255, 0.02); padding: 0.55rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="color: var(--text-muted);">SENTIMENTO MACRO:</span><br>
+              <strong style="color: #38bdf8;" id="grokSentimentVal">NEUTRO / CONSTRUTIVO</strong>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.02); padding: 0.55rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="color: var(--text-muted);">NÍVEL DE RISCO:</span><br>
+              <strong style="color: #10b981;" id="grokRiskVal">CONTROLADO (MODERADO)</strong>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.02); padding: 0.55rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="color: var(--text-muted);">ALVO SUGERIDO:</span><br>
+              <strong class="text-emerald" id="grokTargetVal">+R$ 0,05 (Scalp Centavos)</strong>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.02); padding: 0.55rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+              <span style="color: var(--text-muted);">STOP SUGERIDO:</span><br>
+              <strong class="text-red" id="grokStopVal">-R$ 0,06 (Protegido)</strong>
+            </div>
+          </div>
+        </section>
+
         <!-- Insights e Decisões da IA em Tempo Real -->
         <section class="section-panel">
           <div class="section-header">
@@ -608,6 +895,148 @@
     NEXUS DARWIN AI QUANTITATIVO • Sistema Autônomo Binance Brasil & Sincronização Firebase Realtime Database
   </footer>
 
-  <script src="app.js?v=3.0.0"></script>
+  <!-- MODAL DE ENCERRAMENTO SEGURO SEM PERDAS (DESLIGAMENTO DO PC) -->
+  <div class="modal-overlay" id="modalSafeShutdown">
+    <div class="modal-content">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.35rem;">🛡️</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #fff;">Central de Desligamento Seguro</h3>
+            <span style="font-size: 0.72rem; color: #94a3b8;">Finalização inteligente sem perda de capital</span>
+          </div>
+        </div>
+        <button onclick="closeSafeShutdownModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer; padding: 0.2rem 0.5rem;">✕</button>
+      </div>
+
+      <div style="padding: 1.5rem; max-height: 80vh; overflow-y: auto;">
+        
+        <!-- Estado de Autorização Concedida (quando clica em autorizar) -->
+        <div id="shutdownAuthorizedBanner" style="display: none; background: rgba(16, 185, 129, 0.15); border: 2px solid #10b981; border-radius: var(--radius-md); padding: 1.25rem; text-align: center; margin-bottom: 1.25rem;">
+          <div style="font-size: 2.2rem; margin-bottom: 0.4rem;">✅</div>
+          <div style="font-size: 1.2rem; font-weight: 900; color: #10b981; text-transform: uppercase;">
+            AUTORIZADO A DESLIGAR O COMPUTADOR!
+          </div>
+          <div style="font-size: 0.82rem; color: #e2e8f0; margin-top: 0.4rem; line-height: 1.5;" id="shutdownAuthorizedText">
+            Seu saldo está 100% blindado na Binance. Todas as configurações e preços de entrada foram salvos na memória persistente. Você pode fechar esta aba e desligar seu PC com total tranquilidade!
+          </div>
+          <div style="margin-top: 0.85rem; padding: 0.5rem 0.85rem; background: rgba(0, 0, 0, 0.35); border-radius: 6px; font-size: 0.74rem; color: #a7f3d0;">
+            👉 <strong>Para religar amanhã:</strong> Dê 2 cliques no arquivo <code>INICIAR_SISTEMA_CRIPTO.bat</code>
+          </div>
+        </div>
+
+        <!-- Card de Análise das Posições Atuais -->
+        <div style="background: rgba(0, 0, 0, 0.35); border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.25rem; border: 1px solid rgba(255, 255, 255, 0.06);">
+          <div style="font-size: 0.72rem; color: #38bdf8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.65rem;">
+            📊 Diagnóstico de Carteira em Tempo Real
+          </div>
+          <div id="shutdownAssetsList" style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.82rem;">
+            <div style="color: #94a3b8;">Carregando posições da Binance...</div>
+          </div>
+        </div>
+
+        <!-- Parecer e Recomendação da IA (Melhor Opção Sem Perda) -->
+        <div style="background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(16, 185, 129, 0.08)); border-left: 4px solid #38bdf8; border-radius: var(--radius-sm); padding: 1rem 1.15rem; margin-bottom: 1.5rem;">
+          <div style="font-size: 0.72rem; color: #38bdf8; font-weight: 800; text-transform: uppercase; margin-bottom: 0.35rem; display: flex; align-items: center; gap: 0.4rem;">
+            <span>🤖 RECOMENDAÇÃO INTELIGENTE (SEM PERDAS)</span>
+            <span style="background: rgba(56, 189, 248, 0.2); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.65rem;">IA NEXUS</span>
+          </div>
+          <div style="font-size: 0.88rem; font-weight: 700; color: #fff; margin-bottom: 0.35rem;" id="shutdownRecTitle">
+            Manter as Moedas Salvas na Binance e Desligar o Computador
+          </div>
+          <div style="font-size: 0.78rem; color: #cbd5e1; line-height: 1.5;" id="shutdownRecDesc">
+            Como o robô possui <strong>Memória Persistente Anti-Reinício</strong>, seu Bitcoin e BNB continuam 100% seguros na Binance. Desligando agora você evita pagar taxas desnecessárias de venda, e ao ligar o PC amanhã o robô continua buscando o alvo de <strong>+R$ 0,10 líquido</strong> de onde parou.
+          </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;" id="shutdownActionButtons">
+          <!-- Opção 1: Salvar e Autorizar Desligamento (Recomendada) -->
+          <button onclick="executeSafeShutdown('save_and_authorize')" class="btn" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff; font-weight: 800; font-size: 0.92rem; padding: 0.85rem 1.25rem; border-radius: var(--radius-sm); border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 0.6rem; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);">
+            <span>🟢 SALVAR TUDO & ME AUTORIZAR A DESLIGAR (SEM PERDAS)</span>
+          </button>
+
+          <!-- Opção 2: Zerar tudo para Real agora -->
+          <button onclick="executeSafeShutdown('sell_all')" class="btn" style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; font-weight: 700; font-size: 0.78rem; padding: 0.65rem 1rem; border-radius: var(--radius-sm); cursor: pointer;">
+            🔴 Prefiro Vender Todas as Moedas para Real (BRL) Agora
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CONFIGURAÇÃO E CONTROLE REMOTO TELEGRAM -->
+  <div class="modal-overlay" id="modalTelegram">
+    <div class="modal-content">
+      <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <span style="font-size: 1.35rem;">📱</span>
+          <div>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #fff;">Controle no Celular via Telegram</h3>
+            <span style="font-size: 0.72rem; color: #94a3b8;">Alertas de compras, vendas e comandos remotos</span>
+          </div>
+        </div>
+        <button onclick="closeTelegramModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer; padding: 0.2rem 0.5rem;">✕</button>
+      </div>
+
+      <div style="padding: 1.5rem; max-height: 80vh; overflow-y: auto;">
+        <!-- Status de Conexão -->
+        <div id="telegramStatusBanner" style="display: flex; align-items: center; justify-content: space-between; background: rgba(14, 165, 233, 0.12); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: var(--radius-md); padding: 0.85rem 1.15rem; margin-bottom: 1.25rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <span id="telegramStatusDot" style="width: 10px; height: 10px; border-radius: 50%; background: #94a3b8; display: inline-block;"></span>
+            <span id="telegramStatusText" style="font-size: 0.84rem; font-weight: 700; color: #e2e8f0;">Verificando conexão...</span>
+          </div>
+          <span id="telegramBadge" style="font-size: 0.70rem; padding: 0.2rem 0.6rem; border-radius: 4px; background: rgba(255,255,255,0.06); color: #94a3b8;">OFFLINE</span>
+        </div>
+
+        <!-- Passo a Passo Rápido -->
+        <div style="background: rgba(0, 0, 0, 0.35); border-radius: var(--radius-md); padding: 1rem 1.15rem; margin-bottom: 1.25rem; border: 1px solid rgba(255, 255, 255, 0.06); font-size: 0.78rem; line-height: 1.5; color: #cbd5e1;">
+          <strong style="color: #38bdf8; display: block; margin-bottom: 0.4rem; font-size: 0.82rem;">⚡ Como Criar seu Bot Gratuito em 1 Minuto:</strong>
+          1. Abra o Telegram e pesquise por <code>@BotFather</code><br>
+          2. Envie o comando <code>/newbot</code>, escolha um nome e um username terminado em <i>bot</i><br>
+          3. O BotFather vai te dar um <strong>Token</strong> (ex: <code>123456789:ABCdefGhI...</code>)<br>
+          4. Cole o Token abaixo, envie um "oi" para o seu robô no Telegram e clique em <strong>Testar no Celular</strong>!
+        </div>
+
+        <!-- Campos de Configuração -->
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.35rem;">TOKEN DO BOT TELEGRAM</label>
+            <input type="text" id="inputTelegramToken" placeholder="Ex: 789123456:AAFl9h-x..." style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(15, 23, 42, 0.95); color: #fff; font-size: 0.82rem; font-family: monospace;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.78rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.35rem;">SEU CHAT ID (ID DA CONVERSA)</label>
+            <input type="text" id="inputTelegramChatId" placeholder="Ex: 123456789 (ou deixe vazio se já mandou 'oi' pro seu bot)" style="width: 100%; box-sizing: border-box; padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(15, 23, 42, 0.95); color: #fff; font-size: 0.82rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <!-- Resposta de Teste / Feedback -->
+        <div id="telegramTestResult" style="display: none; padding: 0.75rem; border-radius: 6px; font-size: 0.78rem; margin-bottom: 1.25rem;"></div>
+
+        <!-- Comandos Disponíveis no Chat -->
+        <div style="background: rgba(0, 0, 0, 0.25); border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.74rem; color: #94a3b8;">
+          <strong style="color: #fff; display: block; margin-bottom: 0.35rem;">📱 Comandos que você pode enviar do seu celular:</strong>
+          <code>/saldo</code> - Consulta saldos e patrimônio na Binance<br>
+          <code>/status</code> - Vê robôs operando e proximidade do alvo (+R$ 0,10)<br>
+          <code>/zerar</code> - Vende posições a mercado e guarda tudo em Real<br>
+          <code>/ajuda</code> - Menu de comandos no Telegram
+        </div>
+
+        <!-- Botões de Ação -->
+        <div style="display: flex; gap: 0.75rem;" id="telegramActionButtons">
+          <button onclick="saveTelegramConfig(true)" class="btn" style="flex: 1; background: linear-gradient(135deg, #0284c7, #0ea5e9); color: #fff; font-weight: 800; font-size: 0.82rem; padding: 0.75rem; border-radius: var(--radius-sm); border: none; cursor: pointer;">
+            🚀 Testar no Celular
+          </button>
+          <button onclick="saveTelegramConfig(false)" class="btn" style="flex: 1; background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #10b981; font-weight: 800; font-size: 0.82rem; padding: 0.75rem; border-radius: var(--radius-sm); cursor: pointer;">
+            💾 Salvar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js?v=4.4.7"></script>
 </body>
 </html>

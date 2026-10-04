@@ -1,18 +1,15 @@
 @echo off
-title PUBLICAR NEXUS DARWIN NA VERCEL
+title NEXUS DARWIN - PUBLICADOR VERCEL
 color 0A
-echo ========================================================
-echo   NEXUS DARWIN AI - PUBLICADOR DE PRODUCAO VERCEL
-echo ========================================================
+echo ======================================================================
+echo           NEXUS DARWIN AI - PUBLICADOR DIRETO NA VERCEL
+echo ======================================================================
 echo.
 cd /d "%~dp0"
-echo Enviando arquivos atualizados para a Vercel em Producao...
+
+echo Enviando arquivos diretamente para PRODUCAO na Vercel...
 echo.
-npx vercel --prod --yes
+node deploy_to_vercel.js
+
 echo.
-echo ========================================================
-echo   DEPLOY CONCLUIDO!
-echo   Acesse: https://nexus-darwin-ai.vercel.app/
-echo   Alpaca: https://nexus-darwin-ai.vercel.app/alpaca.html
-echo ========================================================
 pause

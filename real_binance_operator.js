@@ -28,30 +28,66 @@ const { FirebaseCloudSync } = fs.existsSync(path.join(__dirname, 'firebase_cloud
 const cloudSync = new FirebaseCloudSync();
 cloudSync.databaseURL = FIREBASE_URL;
 
+const { runGrokStrategicAnalysis } = require('./grok_advisor.js');
+const { persistentState } = require('./persistent_state_manager.js');
+const { telegramNotifier } = require('./telegram_notifier.js');
+
 // =============================================================================
 // CESTA DE MOEDAS MONITORADAS (MULTI-CRIPTO)
 // =============================================================================
 const MONITORED_ASSETS = [
-  { symbol: 'BTCBRL', baseAsset: 'BTC', name: 'Bitcoin', decimals: 5, minQty: 0.00001 },
-  { symbol: 'ETHBRL', baseAsset: 'ETH', name: 'Ethereum', decimals: 4, minQty: 0.0001 },
+  // TIER 1: ALTA VOLATILIDADE & ALTA FREQUÊNCIA DE TRADES (PRIORIDADE MÁXIMA)
   { symbol: 'SOLBRL', baseAsset: 'SOL', name: 'Solana', decimals: 3, minQty: 0.001 },
-  { symbol: 'BNBBRL', baseAsset: 'BNB', name: 'BNB', decimals: 3, minQty: 0.001 },
-  { symbol: 'XRPBRL', baseAsset: 'XRP', name: 'XRP', decimals: 1, minQty: 0.1 },
-  { symbol: 'DOGEBRL', baseAsset: 'DOGE', name: 'Dogecoin', decimals: 0, minQty: 1 },
-  { symbol: 'ADABRL', baseAsset: 'ADA', name: 'Cardano', decimals: 1, minQty: 0.1 },
-  { symbol: 'LINKBRL', baseAsset: 'LINK', name: 'Chainlink', decimals: 2, minQty: 0.01 },
-  { symbol: 'AVAXBRL', baseAsset: 'AVAX', name: 'Avalanche', decimals: 2, minQty: 0.01 },
-  { symbol: 'NEARBRL', baseAsset: 'NEAR', name: 'NEAR Protocol', decimals: 1, minQty: 0.1 },
   { symbol: 'SUIBRL', baseAsset: 'SUI', name: 'Sui', decimals: 1, minQty: 0.1 },
-  { symbol: 'RENDERBRL', baseAsset: 'RENDER', name: 'Render', decimals: 2, minQty: 0.01 },
-  { symbol: 'LTCBRL', baseAsset: 'LTC', name: 'Litecoin', decimals: 3, minQty: 0.001 },
-  { symbol: 'POLBRL', baseAsset: 'POL', name: 'Polygon', decimals: 1, minQty: 0.1 },
+  { symbol: 'NEARBRL', baseAsset: 'NEAR', name: 'NEAR Protocol', decimals: 1, minQty: 0.1 },
+  { symbol: 'DOGEBRL', baseAsset: 'DOGE', name: 'Dogecoin', decimals: 0, minQty: 1 },
   { symbol: 'PEPEBRL', baseAsset: 'PEPE', name: 'Pepe', decimals: 0, minQty: 1 },
+  { symbol: 'RENDERBRL', baseAsset: 'RENDER', name: 'Render', decimals: 2, minQty: 0.01 },
+  { symbol: 'AVAXBRL', baseAsset: 'AVAX', name: 'Avalanche', decimals: 2, minQty: 0.01 },
+  { symbol: 'XRPBRL', baseAsset: 'XRP', name: 'XRP', decimals: 1, minQty: 0.1 },
+  { symbol: 'LINKBRL', baseAsset: 'LINK', name: 'Chainlink', decimals: 2, minQty: 0.01 },
+  { symbol: 'ADABRL', baseAsset: 'ADA', name: 'Cardano', decimals: 1, minQty: 0.1 },
+  { symbol: 'POLBRL', baseAsset: 'POL', name: 'Polygon', decimals: 1, minQty: 0.1 },
+  { symbol: 'LTCBRL', baseAsset: 'LTC', name: 'Litecoin', decimals: 3, minQty: 0.001 },
+  // TIER 2: ATIVOS MENOS VOLÁTEIS / RESERVA
+  { symbol: 'BNBBRL', baseAsset: 'BNB', name: 'BNB', decimals: 3, minQty: 0.001 },
+  { symbol: 'ETHBRL', baseAsset: 'ETH', name: 'Ethereum', decimals: 4, minQty: 0.0001 },
+  { symbol: 'BTCBRL', baseAsset: 'BTC', name: 'Bitcoin', decimals: 5, minQty: 0.00001 },
   { symbol: 'USDCBRL', baseAsset: 'USDC', name: 'USD Coin', decimals: 2, minQty: 0.1 }
 ];
 
 const priceHistories = {};
 MONITORED_ASSETS.forEach(a => { priceHistories[a.symbol] = []; });
+
+const candleCache5m = {};
+MONITORED_ASSETS.forEach(a => {
+  candleCache5m[a.symbol] = {
+    symbol: a.symbol,
+    klines: [],
+    closes: [],
+    rsi: 50.0,
+    ema9: 0,
+    ema21: 0,
+    bb: { upper: 0, middle: 0, lower: 0, bandwidth: 0 },
+    currentCandle: { open: 0, high: 0, low: 0, close: 0, volume: 0 },
+    prevCandle: { open: 0, high: 0, low: 0, close: 0, volume: 0 },
+    lastFetch: 0
+  };
+});
+
+const macroCache7d = {};
+MONITORED_ASSETS.forEach(a => {
+  macroCache7d[a.symbol] = {
+    symbol: a.symbol,
+    high7d: 0,
+    low7d: 0,
+    rangePosition7d: 50.0,
+    buyerRatio6h: 50.0,
+    buyerRatio24h: 50.0,
+    trend7d: 'NEUTRO',
+    lastFetch: 0
+  };
+});
 
 // =============================================================================
 // 1. COMUNICAÇÃO BINANCE (ASSINADA VIA HMAC-SHA256)
@@ -192,6 +228,39 @@ function getLivePrice(symbol) {
   });
 }
 
+function getKlines(symbol, interval = '5m', limit = 25) {
+  return new Promise((resolve) => {
+    https.get(`https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`, (res) => {
+      let d = '';
+      res.on('data', (c) => (d += c));
+      res.on('end', () => {
+        try {
+          const raw = JSON.parse(d);
+          if (Array.isArray(raw)) {
+            resolve(raw.map(k => ({
+              openTime: k[0],
+              open: parseFloat(k[1]),
+              high: parseFloat(k[2]),
+              low: parseFloat(k[3]),
+              close: parseFloat(k[4]),
+              volume: parseFloat(k[5]),
+              closeTime: k[6],
+              quoteVolume: parseFloat(k[7]) || 0,
+              tradesCount: parseInt(k[8]) || 0,
+              takerBuyBase: parseFloat(k[9]) || 0,
+              takerBuyQuote: parseFloat(k[10]) || 0
+            })));
+          } else {
+            resolve(null);
+          }
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }).on('error', () => resolve(null));
+  });
+}
+
 async function executeConvertTrade(fromAsset, toAsset, amount) {
   try {
     const formattedAmount = fromAsset === 'BRL'
@@ -283,7 +352,9 @@ function calcRSI(history, period = 14) {
     if (diff >= 0) gains += diff;
     else losses -= diff;
   }
+  if (losses === 0 && gains === 0) return 50;
   if (losses === 0) return 100;
+  if (gains === 0) return 30;
   const rs = gains / period / (losses / period);
   return 100 - 100 / (1 + rs);
 }
@@ -298,6 +369,126 @@ function calcEMA(history, period) {
   return ema;
 }
 
+function calcBollingerBands(history, period = 20, multiplier = 2) {
+  if (history.length < period) {
+    const last = history[history.length - 1] || 1;
+    return { middle: last, upper: last * 1.01, lower: last * 0.99, bandwidth: 0.02 };
+  }
+  const slice = history.slice(-period);
+  const mean = slice.reduce((a, b) => a + b, 0) / period;
+  const variance = slice.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
+  const stdDev = Math.sqrt(variance);
+  return {
+    middle: mean,
+    upper: mean + (multiplier * stdDev),
+    lower: mean - (multiplier * stdDev),
+    bandwidth: (2 * multiplier * stdDev) / mean
+  };
+}
+
+async function refreshCandleCache5m() {
+  const eligible = MONITORED_ASSETS.filter(a => !['BTCBRL', 'ETHBRL', 'BNBBRL', 'USDCBRL'].includes(a.symbol));
+  await Promise.all(eligible.map(async (asset) => {
+    try {
+      const klines = await getKlines(asset.symbol, '5m', 25);
+      if (klines && klines.length >= 15) {
+        const closes = klines.map(k => k.close);
+        const rsi = Number(calcRSI(closes, 14).toFixed(1));
+        const ema9 = calcEMA(closes, 9);
+        const ema21 = calcEMA(closes, 21);
+        const bb = calcBollingerBands(closes, 20, 2);
+        candleCache5m[asset.symbol] = {
+          symbol: asset.symbol,
+          klines,
+          closes,
+          rsi,
+          ema9,
+          ema21,
+          bb,
+          currentCandle: klines[klines.length - 1],
+          prevCandle: klines[klines.length - 2],
+          lastFetch: Date.now()
+        };
+      }
+    } catch (e) {}
+  }));
+}
+
+function getMarketSessionInfo() {
+  const now = new Date();
+  const brHour = (now.getUTCHours() - 3 + 24) % 24;
+  let sessionName = 'SESSÃO NOTURNA';
+  let liquidityLevel = 'MÉDIA';
+
+  if (brHour >= 10 && brHour < 17) {
+    sessionName = 'SESSÃO NOVA YORK (Volume Máximo Institucional)';
+    liquidityLevel = 'ALTA';
+  } else if ((brHour >= 21 && brHour <= 23) || (brHour >= 0 && brHour < 2)) {
+    sessionName = 'SESSÃO ÁSIA (Reversões Rápidas de Fundo)';
+    liquidityLevel = 'ALTA';
+  } else if (brHour >= 2 && brHour < 8) {
+    sessionName = 'SESSÃO MADRUGADA (Baixa Liquidez / Prudência)';
+    liquidityLevel = 'BAIXA';
+  } else {
+    sessionName = 'SESSÃO EUROPA (Consolidação)';
+    liquidityLevel = 'MÉDIA';
+  }
+  return { brHour, sessionName, liquidityLevel };
+}
+
+async function refreshMacroCache7d() {
+  const eligible = MONITORED_ASSETS.filter(a => !['BTCBRL', 'ETHBRL', 'BNBBRL', 'USDCBRL'].includes(a.symbol));
+  await Promise.all(eligible.map(async (asset) => {
+    try {
+      // 168 horas = 7 dias completos
+      const klines1h = await getKlines(asset.symbol, '1h', 168);
+      if (klines1h && klines1h.length >= 24) {
+        const highs = klines1h.map(k => k.high);
+        const lows = klines1h.map(k => k.low);
+        const closes = klines1h.map(k => k.close);
+        const high7d = Math.max(...highs);
+        const low7d = Math.min(...lows);
+        const curP = closes[closes.length - 1];
+
+        const rangeSpan = high7d - low7d;
+        const rangePosition7d = rangeSpan > 0 ? Number((((curP - low7d) / rangeSpan) * 100).toFixed(1)) : 50.0;
+
+        // Order flow de compradores vs vendedores
+        const last6 = klines1h.slice(-6);
+        let vol6 = 0, buyVol6 = 0;
+        last6.forEach(k => {
+          vol6 += k.volume;
+          buyVol6 += k.takerBuyBase || (k.volume * 0.5);
+        });
+
+        const last24 = klines1h.slice(-24);
+        let vol24 = 0, buyVol24 = 0;
+        last24.forEach(k => {
+          vol24 += k.volume;
+          buyVol24 += k.takerBuyBase || (k.volume * 0.5);
+        });
+
+        const buyerRatio6h = vol6 > 0 ? Number(((buyVol6 / vol6) * 100).toFixed(1)) : 50.0;
+        const buyerRatio24h = vol24 > 0 ? Number(((buyVol24 / vol24) * 100).toFixed(1)) : 50.0;
+
+        const ema50 = calcEMA(closes, Math.min(50, closes.length));
+        const trend7d = curP >= ema50 ? 'ALTA_MACRO' : 'BAIXA_MACRO';
+
+        macroCache7d[asset.symbol] = {
+          symbol: asset.symbol,
+          high7d,
+          low7d,
+          rangePosition7d,
+          buyerRatio6h,
+          buyerRatio24h,
+          trend7d,
+          lastFetch: Date.now()
+        };
+      }
+    } catch (e) {}
+  }));
+}
+
 // =============================================================================
 // 3. ESTADO OFICIAL DO ECOSSISTEMA
 // =============================================================================
@@ -308,11 +499,11 @@ const ecosystemState = {
   isRunning: true,
   initialSeedCapital: 10.00,
   targetProfitPerBot: 10.00, // Meta de +R$ 10 somados para clonar novo robô
-  takeProfitMinPct: 1.2,     // Scalping ideal calibrado: 1.2% a 1.5%
-  takeProfitMaxPct: 1.5,
-  stopLossPctPerTrade: 0.9,  // Stop loss de proteção: 0.9%
-  trailingTriggerPct: 1.0,   // Quando o trade atingir +1.0%, ativa o Trailing Lock
-  trailingLockPct: 0.4,      // Trava de saída garantida no lucro (+0.4% no bolso)
+  takeProfitMinPct: 0.35,    // Scalping rápido de centavos (Take Profit: R$ 0.05 a R$ 0.08)
+  takeProfitMaxPct: 0.60,
+  stopLossPctPerTrade: 0.35, // Stop loss de proteção curto: ~0.35% (apenas ~R$ 0.06 de perda máxima)
+  trailingTriggerPct: 0.20,  // Quando o trade atingir +0.20% (+R$ 0.03/0.04), ativa o Trailing Lock
+  trailingLockPct: 0.10,     // Trava de lucro mínimo no bolso (+R$ 0.02 garantidos)
 
   masterVaultBalance: 0.00,
   binanceFundingVault: 0.00,
@@ -328,7 +519,7 @@ const ecosystemState = {
     globalBestWeights: { w_rsi: 0.85, w_ema: 0.90, w_bollinger: 0.75, w_macd: 0.80, w_flow: 0.70, w_regime: 0.85 },
     avoidedPatternsCount: 0,
     recentInsights: [
-      'IA MULTI-CRIPTO: Monitorando BTC, SOL, ETH e BNB para scalping inteligente de 1.0% a 1.5%.'
+      'IA MULTI-CRIPTO: Operando scalping ultra-rápido de 5 centavos (+R$ 0,05) com Trailing Stop dinâmico.'
     ]
   },
 
@@ -394,25 +585,30 @@ async function refreshBalancesAndAssets() {
   for (const asset of MONITORED_ASSETS) {
     if (asset.baseAsset === 'USDC' || asset.baseAsset === 'BRL') continue;
     const qty = balances[asset.baseAsset];
-    if (qty && qty >= asset.minQty) {
+    if (qty && qty > 0.00000001) {
       const curPrice = (await getLivePrice(asset.symbol)) || 1;
       const val = Number((qty * curPrice).toFixed(2));
-      if (val >= 1.00) {
+      if (val >= 0.10) {
         cryptoHoldingsValue += val;
         const managingBot = ecosystemState.activeBots.find(b =>
           (b.openPosition && b.openPosition.symbol.includes(asset.baseAsset)) ||
           b.assignedAsset.includes(asset.baseAsset)
         );
+        const isDust = val < 5.00 && !managingBot;
         assetsList.push({
           asset: asset.baseAsset,
           name: asset.name,
           symbol: asset.symbol,
-          type: 'CRYPTO_SCALP',
+          type: isDust ? 'CRYPTO_DUST' : 'CRYPTO_SCALP',
           qty: qty,
           price: curPrice,
           valueBrl: val,
-          role: managingBot ? `${managingBot.name} (Scalping Ativo)` : 'Em Carteira Spot',
-          badgeClass: 'tag-cripto',
+          role: managingBot 
+            ? `${managingBot.name} (Scalping Ativo)` 
+            : isDust 
+            ? 'Resíduo de Ordem (Poeira)' 
+            : 'Em Carteira Spot',
+          badgeClass: isDust ? 'tag-dust' : 'tag-cripto',
           pnlText: managingBot && managingBot.dailyPnL ? `${managingBot.dailyPnL >= 0 ? '+' : ''}R$ ${managingBot.dailyPnL.toFixed(2)}` : '--'
         });
       }
@@ -459,11 +655,11 @@ async function startMultiAssetTrader() {
   console.log(' 🚀 NEXUS DARWIN AI - MOTOR MULTI-CRIPTO 100% REAL (SCALPING)');
   console.log('===================================================================');
   console.log(`[RADAR DINÂMICO PILAR A]: Monitorando ${MONITORED_ASSETS.length} maiores ativos líquidos em BRL!`);
-  console.log('[META POR TRADE]: 1.2% a 1.5% c/ Trailing Lock (+0.4% garantido)');
+  console.log('[META POR TRADE]: Scalp Ultra-Rápido de 5 centavos (+R$ 0,05) c/ Trailing Lock (+R$ 0,03) e Stop (-R$ 0,06)');
   console.log(`[IP PÚBLICO ATUAL DA MÁQUINA]: ${currentIp}`);
 
   // Verifica saldos reais iniciais
-  const balances = await getRealBalances();
+  let balances = await getRealBalances();
   console.log('[SALDOS REAIS ENCONTRADOS]:', balances);
 
   if (balances.error && balances.code === -2015) {
@@ -477,96 +673,117 @@ async function startMultiAssetTrader() {
     console.log('===================================================================\n');
   }
 
-  // Detecta se há posições ativas em criptos (ex: Solana, BNB)
-  let foundPositions = [];
-  for (const asset of MONITORED_ASSETS) {
-    if (asset.baseAsset === 'USDC' || asset.baseAsset === 'BRL') continue;
-    const qty = balances[asset.baseAsset];
-    if (qty && qty >= asset.minQty) {
-      const curPrice = (await getLivePrice(asset.symbol)) || 1;
-      const val = Number((qty * curPrice).toFixed(2));
-      if (val >= 2.00) {
-        foundPositions.push({
-          symbol: asset.symbol,
-          assetName: asset.name,
-          baseAsset: asset.baseAsset,
-          decimals: asset.decimals,
-          side: 'LONG',
-          entryPrice: curPrice,
-          qty: qty,
-          notionalBrl: val,
-          orderId: 'LIVE-' + Date.now(),
-          openedAt: new Date().toLocaleTimeString('pt-BR'),
-          targetTakeProfitPrice: Number((curPrice * 1.015).toFixed(2)),
-          targetProfitBrl: Number((val * 0.015).toFixed(2)),
-          trailingLockTriggerPrice: Number((curPrice * 1.010).toFixed(2)),
-          stopLossPrice: Number((curPrice * 0.991).toFixed(2))
-        });
-      }
-    }
-  }
+  // ===========================================================================
+  // RECUPERAÇÃO INTELIGENTE PÓS-REINÍCIO (REBOOT RECOVERY & AUTO-CURA)
+  // ===========================================================================
+  const reconciled = await persistentState.reconcileStateOnStartup(
+    balances,
+    MONITORED_ASSETS,
+    getLivePrice,
+    binanceSignedRequest
+  );
 
-  // Configuração dos 2 Robôs com base nas posições reais da Binance
-  const solPos = foundPositions.find(p => p.symbol === 'SOLBRL');
-  const bnbPos = foundPositions.find(p => p.symbol === 'BNBBRL');
-  const otherPos = foundPositions.find(p => p.symbol !== 'SOLBRL' && p.symbol !== 'BNBBRL');
+  ecosystemState.activeBots = reconciled.activeBots;
+  ecosystemState.tradeLogs = reconciled.tradeLogs;
+  ecosystemState.hiveMind.totalTradesExecuted = ecosystemState.tradeLogs.length;
 
-  ecosystemState.activeBots = [
-    {
-      id: 'BOT-REAL-01',
-      name: 'Alpha-Titans-01',
-      generation: 1,
-      createdAtDay: 1,
-      assignedAsset: solPos ? 'SOL/BRL' : 'BTC/BRL',
-      marketType: 'BINANCE_CRIPTO',
-      initialDayCapital: 20.00,
-      currentCapital: solPos ? solPos.notionalBrl : 20.00,
-      dailyPnL: 0.00,
-      accumulatedCentsProfit: 0.00,
-      dailyTargetProfit: 20.00,
-      accumulatedVaultProfit: 0.00,
-      openPosition: solPos || otherPos || null,
-      brain: {
-        iq: 122,
-        confidenceThreshold: 0.60,
-        weights: { w_rsi: 0.85, w_ema: 0.90, w_bollinger: 0.75, w_macd: 0.80, w_flow: 0.70, w_regime: 0.85 }
-      }
-    },
-    {
-      id: 'BOT-REAL-02',
-      name: 'Beta-Speed-02',
-      generation: 1,
-      createdAtDay: 1,
-      assignedAsset: bnbPos ? 'BNB/BRL' : 'BNB/BRL',
-      marketType: 'BINANCE_CRIPTO',
-      initialDayCapital: 20.00,
-      currentCapital: bnbPos ? bnbPos.notionalBrl : 20.00,
-      dailyPnL: 0.00,
-      accumulatedCentsProfit: 0.00,
-      dailyTargetProfit: 20.00,
-      accumulatedVaultProfit: 0.00,
-      openPosition: bnbPos || null,
-      brain: {
-        iq: 119,
-        confidenceThreshold: 0.58,
-        weights: { w_rsi: 0.88, w_ema: 0.85, w_bollinger: 0.80, w_macd: 0.75, w_flow: 0.75, w_regime: 0.80 }
-      }
-    }
-  ];
+  // Salva no disco imediatamente
+  persistentState.saveState(ecosystemState);
 
   await refreshBalancesAndAssets();
 
-  console.log(`🤖 [LEAN SWARM ATIVADO]: 2 Robôs operando simultâneos!`);
-  console.log(`   - Robô #1 (Alpha): Foco SOL/BTC/ETH ${solPos ? `[Posição SOL ativa: R$ ${solPos.notionalBrl}]` : ''}`);
-  console.log(`   - Robô #2 (Beta): Foco BNB/XRP/SUI ${bnbPos ? `[Posição BNB ativa: R$ ${bnbPos.notionalBrl}]` : ''}`);
+  console.log('📊 [CARREGANDO VELAS 5M BINANCE]: Carregando dados de velas de 5 minutos...');
+  await refreshCandleCache5m();
+  console.log('✅ [VELAS 5M BINANCE PRONTAS]: Filtro anti-topo institucional ativo.');
+
+  console.log('📈 [CARREGANDO MACRO 7 DIAS & ORDER FLOW]: Carregando 168 horas de histórico institucional...');
+  await refreshMacroCache7d();
+  const sessionInfo = getMarketSessionInfo();
+  console.log(`✅ [MACRO 7D & FLUXO ATIVOS]: ${sessionInfo.sessionName} (Liquidez: ${sessionInfo.liquidityLevel})`);
+
+  console.log(`🤖 [LEAN SWARM ATIVADO]: 2 Robôs operando simultâneos com memória persistente!`);
+  ecosystemState.activeBots.forEach((b, i) => {
+    console.log(`   - Robô #${i + 1} (${b.name}): Moeda ${b.assignedAsset} ${b.openPosition ? `[Entrada Real: R$ ${b.openPosition.entryPrice} | Ordem #${b.openPosition.orderId}]` : '[Caixa Livre]'}`);
+  });
+
+  // Inicializa o Polling de comandos do Telegram (Controle Remoto pelo Celular)
+  telegramNotifier.startPolling(async (command, chatId) => {
+    const cmd = command.toLowerCase().trim();
+    if (cmd === '/saldo' || cmd === 'saldo') {
+      const refreshed = await refreshBalancesAndAssets();
+      if (refreshed && refreshed.balances) balances = refreshed.balances;
+      const btcPrice = (await getLivePrice('BTCBRL')) || 445000;
+      const bnbPrice = (await getLivePrice('BNBBRL')) || 4140;
+      const btcBrl = (balances.BTC || 0) * btcPrice;
+      const bnbBrl = (balances.BNB || 0) * bnbPrice;
+      const usdcBrl = (balances.usdcFree || balances.USDC || balances.LDUSDC || 0) * 5.25;
+      const totalPatrimony = (balances.brlFree || 0) + btcBrl + bnbBrl + usdcBrl;
+      return `💼 <b>SALDO ATUAL BINANCE (REAL)</b>\n\n` +
+        `🇧🇷 <b>BRL Livre:</b> R$ ${(balances.brlFree || 0).toFixed(2)}\n` +
+        `₿ <b>BTC:</b> ${(balances.BTC || 0).toFixed(6)} (~R$ ${btcBrl.toFixed(2)})\n` +
+        `🔶 <b>BNB:</b> ${(balances.BNB || 0).toFixed(4)} (~R$ ${bnbBrl.toFixed(2)}) <i>(Desconto 25% ativo!)</i>\n` +
+        `💵 <b>USDC Earn:</b> ${(balances.usdcFree || balances.USDC || balances.LDUSDC || 0).toFixed(2)} (~R$ ${usdcBrl.toFixed(2)})\n\n` +
+        `💰 <b>Patrimônio Total: R$ ${totalPatrimony.toFixed(2)}</b>`;
+    }
+    if (cmd === '/status' || cmd === 'status') {
+      let msg = `🤖 <b>STATUS DO ENXAME DARWIN</b>\n\n`;
+      ecosystemState.activeBots.forEach((b, i) => {
+        msg += `<b>Robô #${i + 1} (${b.name})</b>\n`;
+        if (b.openPosition) {
+          msg += `⚡ <i>Em Trade:</i> ${b.openPosition.assetName} (Entrada: R$ ${b.openPosition.entryPrice.toFixed(2)})\n`;
+          msg += `🎯 <i>Alvo Líquido (+R$ 0,10):</i> R$ ${b.openPosition.targetTakeProfitPrice.toFixed(2)}\n`;
+          msg += `🛡️ <i>Trailing Stop:</i> ${b.openPosition.trailingLocked ? 'Ativado (+R$ 0,05 garantido)' : 'Aguardando alvo'}\n\n`;
+        } else {
+          msg += `🟢 <i>Caixa Livre (Aguardando Oportunidade)</i>\n\n`;
+        }
+      });
+      msg += `📊 <i>Trades Hoje:</i> ${ecosystemState.hiveMind.totalTradesExecuted} | <i>Acertos:</i> ${ecosystemState.hiveMind.winningTrades}\n`;
+      return msg;
+    }
+    if (cmd === '/zerar' || cmd === 'zerar') {
+      let closedCount = 0;
+      for (const b of ecosystemState.activeBots) {
+        if (b.openPosition) {
+          const pos = b.openPosition;
+          await executeRealMarketOrder(pos.symbol, 'SELL', null, pos.qty, pos.decimals, pos.baseAsset);
+          b.openPosition = null;
+          closedCount++;
+        }
+      }
+      const refreshed = await refreshBalancesAndAssets();
+      if (refreshed && refreshed.balances) balances = refreshed.balances;
+      return `🛑 <b>POSIÇÕES ZERADAS COM SUCESSO!</b>\n\n` +
+        `Total de ${closedCount} posição(ões) fechada(s) a mercado e convertida(s) para BRL. Robôs em segurança no caixa livre.`;
+    }
+    if (cmd === '/ajuda' || cmd === 'ajuda' || cmd === '/start') {
+      return `👋 <b>NEXUS DARWIN AI - COMANDOS NO CELULAR</b>\n\n` +
+        `📱 <b>/saldo</b> - Consulta saldos da Binance em tempo real\n` +
+        `🤖 <b>/status</b> - Mostra status dos robôs e posições em trade\n` +
+        `🛑 <b>/zerar</b> - Fecha todas as posições para BRL imediatamente\n` +
+        `❓ <b>/ajuda</b> - Exibe esta lista de comandos`;
+    }
+    return null;
+  });
 
   let tickCount = 0;
   let lastBuyAttempt = 0;
+  let isExecutingOrder = false;
+  const assetSellCooldowns = {};
 
   // Loop de Análise Multi-Moedas a cada 2.5 segundos
   setInterval(async () => {
     try {
       tickCount++;
+
+      // A cada 6 ciclos (15 segundos), atualiza velas reais de 5 minutos de todas as moedas
+      if (tickCount % 6 === 0) {
+        refreshCandleCache5m().catch(() => {});
+      }
+
+      // A cada 120 ciclos (5 minutos), atualiza o canal macro de 7 dias (168h) e fluxo de compradores
+      if (tickCount % 120 === 0) {
+        refreshMacroCache7d().catch(() => {});
+      }
 
       // Atualiza preços de todas as moedas simultaneamente
       for (const asset of MONITORED_ASSETS) {
@@ -577,15 +794,20 @@ async function startMultiAssetTrader() {
         }
       }
 
-      // Atualiza o Radar Scanner de Mercado com métricas técnicas (RSI, EMA, Score e Status)
+      // Atualiza o Radar Scanner de Mercado com métricas técnicas (RSI 5M, EMA, 7D Range, Fluxo Comprador, Score e Status)
       const scannerList = [];
       for (const asset of MONITORED_ASSETS) {
         if (asset.baseAsset === 'BRL') continue;
         const h = priceHistories[asset.symbol] || [];
         const curPrice = h.length > 0 ? h[h.length - 1] : 0;
-        const rsi = h.length >= 10 ? Number(calcRSI(h, 14).toFixed(1)) : 50.0;
-        const ema9 = h.length >= 5 ? calcEMA(h, 9) : curPrice;
-        const ema21 = h.length >= 10 ? calcEMA(h, 21) : curPrice;
+        const cData = candleCache5m[asset.symbol];
+        const mData = macroCache7d[asset.symbol];
+
+        // Prioridade absoluta para as velas reais de 5 minutos da Binance:
+        const rsi = (cData && cData.rsi) ? cData.rsi : (h.length >= 10 ? Number(calcRSI(h, 14).toFixed(1)) : 50.0);
+        const ema9 = (cData && cData.ema9) ? cData.ema9 : (h.length >= 5 ? calcEMA(h, 9) : curPrice);
+        const ema21 = (cData && cData.ema21) ? cData.ema21 : (h.length >= 10 ? calcEMA(h, 21) : curPrice);
+        const bb = (cData && cData.bb) ? cData.bb : null;
         const trend = ema9 >= ema21 ? 'ALTA' : 'BAIXA';
 
         const activeBotUsing = ecosystemState.activeBots.find(b =>
@@ -601,15 +823,15 @@ async function startMultiAssetTrader() {
           status = `⚡ Em Trade (${activeBotUsing.name})`;
           badge = 'tag-trading';
           score = 95;
-        } else if (rsi < 45 && ema9 >= ema21 * 0.999) {
-          status = '🟢 Oportunidade de Compra';
+        } else if (rsi <= 46 && bb && curPrice <= bb.lower * 1.004) {
+          status = '🟢 Fundo Bollinger / Compra';
           badge = 'tag-buy';
-          score = 88;
-        } else if (rsi < 50) {
-          status = '🟡 Em Sobrevenda';
+          score = 92;
+        } else if (rsi <= 46) {
+          status = '🟡 Sobrevenda 5M';
           badge = 'tag-watch';
-          score = 72;
-        } else if (rsi > 70) {
+          score = 78;
+        } else if (rsi > 60) {
           status = '🔴 Sobrecomprado (Evitar)';
           badge = 'tag-sell';
           score = 25;
@@ -624,10 +846,21 @@ async function startMultiAssetTrader() {
           trend,
           score,
           status,
-          badge
+          badge,
+          range7d: mData ? `${mData.rangePosition7d}% Fundo` : '--',
+          rangePos7d: mData ? mData.rangePosition7d : 50,
+          buyerFlow: mData ? `${mData.buyerRatio24h}% Comp.` : '--',
+          buyerRatio24h: mData ? mData.buyerRatio24h : 50,
+          min7d: mData ? mData.low7d : 0,
+          max7d: mData ? mData.high7d : 0
         });
       }
       ecosystemState.marketScanner = scannerList;
+
+      // A cada 12 ciclos (30 segundos), o Grok analisa o mercado e atualiza o conselho estratégico
+      if (tickCount % 12 === 0 || !ecosystemState.grokAdvisor) {
+        await runGrokStrategicAnalysis(ecosystemState, scannerList);
+      }
 
       // Analisa cada robô ativo
       for (let i = 0; i < ecosystemState.activeBots.length; i++) {
@@ -646,63 +879,186 @@ async function startMultiAssetTrader() {
           let lowestRsi = 999;
 
           for (const asset of MONITORED_ASSETS) {
-            const h = priceHistories[asset.symbol];
-            if (h.length >= 10) {
-              const rsi = calcRSI(h, 14);
-              const ema9 = calcEMA(h, 9);
-              const ema21 = calcEMA(h, 21);
+            // Evita recompra imediata da mesma moeda recém-vendida (cooldown de 3 minutos para permitir rotação de ativos)
+            if (assetSellCooldowns[asset.symbol] && Date.now() < assetSellCooldowns[asset.symbol]) {
+              continue;
+            }
 
-              // Procura moeda em ponto ideal de sobrevenda ou cruzamento altista
-              if (rsi < 48 && ema9 >= ema21 * 0.9995 && rsi < lowestRsi) {
-                lowestRsi = rsi;
-                bestCandidate = { asset, rsi, price: h[h.length - 1] };
-              }
+            // BLOQUEIO TOTAL DE ELEFANTES / MEGA CAPS: NUNCA OPERA BTC, ETH, BNB OU USDC!
+            if (['BTCBRL', 'ETHBRL', 'BNBBRL', 'USDCBRL'].includes(asset.symbol)) {
+              continue;
+            }
+
+            // Não compra a mesma moeda se outro robô já estiver posicionado nela
+            if (ecosystemState.activeBots.some(b => b.openPosition && b.openPosition.symbol === asset.symbol)) {
+              continue;
+            }
+
+            const cData = candleCache5m[asset.symbol];
+            if (!cData || !cData.closes || cData.closes.length < 15) {
+              continue;
+            }
+
+            const mData = macroCache7d[asset.symbol];
+            const rangePos7d = mData ? mData.rangePosition7d : 50;
+            const buyerRatio24h = mData ? mData.buyerRatio24h : 50;
+
+            // -------------------------------------------------------------
+            // CAMADA 1: CANAL MACRO DE 7 DIAS (168 HORAS - ANTI-TOPO SEMANAL)
+            // -------------------------------------------------------------
+            // Se o ativo estiver nos 30% superiores do seu canal semanal (> 70%), DESCARTA!
+            // Garante que o robô NUNCA compre ativos esticados no topo do gráfico semanal.
+            if (rangePos7d > 70.0) {
+              continue;
+            }
+
+            // -------------------------------------------------------------
+            // CAMADA 2: FLUXO DE ORDENS COMPRADORAS VS VENDEDORAS (TAKER BUY FLOW 24H)
+            // -------------------------------------------------------------
+            // Se o volume de compradores agressivos for menor que 42% (vendedores > 58%),
+            // significa que o ativo está em sangria contínua / despejo institucional, DESCARTA!
+            if (buyerRatio24h < 42.0) {
+              continue;
+            }
+
+            const rsi5m = cData.rsi;
+            const ema9 = cData.ema9;
+            const ema21 = cData.ema21;
+            const bb = cData.bb;
+            const curP = priceHistories[asset.symbol]?.length > 0
+              ? priceHistories[asset.symbol][priceHistories[asset.symbol].length - 1]
+              : cData.currentCandle.close;
+            const prevClose = cData.prevCandle ? cData.prevCandle.close : curP;
+
+            // -------------------------------------------------------------
+            // CAMADA 3: GATILHO MICRO SNIPER (VELAS DE 5 MINUTOS - BINANCE)
+            // -------------------------------------------------------------
+            // 1. REGRA ANTI-TOPO DE VELAS 5M: Se RSI > 46, descarta (nunca compra vela verde esticada)
+            if (rsi5m > 46) {
+              continue;
+            }
+
+            // 2. SOBREVENDA REAL: RSI de 5m <= 46
+            const isOversold = rsi5m <= 46;
+
+            // 3. PULLBACK OU TOQUE NA BANDA INFERIOR DE BOLLINGER (5M) OU SOBREVENDA FORTE
+            const touchesLowerBand = curP <= (bb.lower * 1.004);
+
+            // 4. ESTABILIDADE DE FUNDO: Preço não está despencando sem suporte
+            const bottomRejection = curP >= (prevClose * 0.995);
+
+            // 5. SUPORTE DE MÉDIAS MÓVEIS (EMA 9 vs EMA 21)
+            const emaSupport = ema9 >= (ema21 * 0.985);
+
+            if (isOversold && (touchesLowerBand || rsi5m <= 38) && bottomRejection && emaSupport && rsi5m < lowestRsi) {
+              lowestRsi = rsi5m;
+              bestCandidate = { 
+                asset, 
+                rsi: rsi5m, 
+                price: curP, 
+                bbLower: bb.lower,
+                rangePos7d,
+                buyerRatio24h
+              };
             }
           }
 
-          // Se achou uma oportunidade e o robô tem no mínimo R$ 2,00 em caixa (cooldown de 30s se falhar):
-          if (bestCandidate && bot.currentCapital >= 2.00 && (Date.now() - lastBuyAttempt > 30000)) {
-            lastBuyAttempt = Date.now();
-            const { asset, rsi, price } = bestCandidate;
-            const buyAmount = Number((Math.floor(Math.min(bot.currentCapital, 20.00) * 100) / 100).toFixed(2));
-            console.log(`🎯 [OPORTUNIDADE DETECTADA EM ${asset.name}!] RSI: ${rsi.toFixed(1)} | Preço: R$ ${price} | Valor da Ordem: R$ ${buyAmount}`);
+          // Se achou uma oportunidade Sniper e o intervalo entre compras foi respeitado:
+          if (bestCandidate && (Date.now() - lastBuyAttempt > 15000)) {
+            const freshBal = await refreshBalancesAndAssets();
+            if (freshBal && freshBal.balances) balances = freshBal.balances;
 
-            const order = await executeRealMarketOrder(asset.symbol, 'BUY', buyAmount, null, asset.decimals, asset.baseAsset);
+            const availableBrl = balances.brlFree || 0;
+            const freeBotsCount = ecosystemState.activeBots.filter(b => !b.openPosition).length;
+            const targetCapital = freeBotsCount > 1 ? (availableBrl / freeBotsCount) : availableBrl;
+            const buyAmount = Number((Math.floor(Math.min(availableBrl, Math.max(10.00, targetCapital)) * 100) / 100).toFixed(2));
 
-            if (order && (order.orderId || order.status === 'FILLED')) {
-              const executedQty = parseFloat(order.executedQty) || (buyAmount / price);
-              const cummulativeQuote = parseFloat(order.cummulativeQuoteQty) || buyAmount;
-              const avgPrice = cummulativeQuote / executedQty || price;
+            if (availableBrl >= 10.00 && buyAmount >= 10.00 && !isExecutingOrder) {
+              isExecutingOrder = true;
+              lastBuyAttempt = Date.now();
+              try {
+                const { asset, rsi, price, rangePos7d, buyerRatio24h } = bestCandidate;
+                console.log(`🎯 [SNIPER 3-CAMADAS EM ${asset.name}!] Canal 7D: ${rangePos7d}% | Compradores 24h: ${buyerRatio24h}% | RSI 5M: ${rsi.toFixed(1)} | Preço: R$ ${price} | Ordem: R$ ${buyAmount}`);
 
-              bot.assignedAsset = asset.symbol.replace('BRL', '/BRL');
-              bot.openPosition = {
-                symbol: asset.symbol,
-                assetName: asset.name,
-                baseAsset: asset.baseAsset,
-                decimals: asset.decimals,
-                side: 'LONG',
-                entryPrice: avgPrice,
-                qty: executedQty,
-                notionalBrl: cummulativeQuote,
-                orderId: order.orderId,
-                openedAt: new Date().toLocaleTimeString('pt-BR')
-              };
+                const order = await executeRealMarketOrder(asset.symbol, 'BUY', buyAmount, null, asset.decimals, asset.baseAsset);
 
-              const buyMsg = `🟢 [COMPRA REAL BINANCE] ${bot.name} comprou R$ ${cummulativeQuote.toFixed(2)} em ${asset.name} (ID: ${order.orderId})`;
-              console.log(buyMsg);
-              ecosystemState.hiveMind.recentInsights.unshift(buyMsg);
-              ecosystemState.tradeLogs.unshift({
-                botId: bot.id,
-                botName: bot.name,
-                symbol: bot.assignedAsset,
-                action: 'BUY',
-                price: avgPrice,
-                amount: cummulativeQuote,
-                timestamp: new Date().toLocaleTimeString('pt-BR'),
-                realOrderId: order.orderId
-              });
+                if (order && (order.orderId || order.status === 'FILLED')) {
+                  const executedQty = parseFloat(order.executedQty) || (buyAmount / price);
+                  const cummulativeQuote = parseFloat(order.cummulativeQuoteQty) || buyAmount;
+                  const avgPrice = cummulativeQuote / executedQty || price;
 
-              await cloudSync.syncEcosystemState(ecosystemState);
+                  bot.assignedAsset = asset.symbol.replace('BRL', '/BRL');
+
+                  // META INSTITUCIONAL COM FOLGA DE 3X O VALOR DA TAXA (+1.5% a +2.2% BRUTO)
+                  // Desconto de taxa da Binance com saldo BNB (0.15% roundtrip) ou padrão (0.20% roundtrip)
+                  const hasBnb = balances.BNB && balances.BNB >= 0.001;
+                  const feeRate = hasBnb ? 0.0015 : 0.0020;
+                  const estRoundtripFee = cummulativeQuote * feeRate;
+                  const feePlusFriction = estRoundtripFee + (cummulativeQuote * 0.0010); // buffer de spread
+
+                  // Alvo Líquido no bolso: NO MÍNIMO 3X A TAXA (ex: R$ 0,22 a R$ 0,30 de lucro limpo)
+                  const targetNetBrl = Math.max(0.22, Number((feePlusFriction * 3.5).toFixed(2)));
+                  const targetGrossBrl = targetNetBrl + estRoundtripFee;
+
+                  const priceDecimals = avgPrice < 1 ? 4 : (avgPrice < 10 ? 3 : 2);
+                  const targetTakeProfitPrice = Number((avgPrice + (targetGrossBrl / executedQty)).toFixed(priceDecimals));
+
+                  // Trailing Lock ativa quando o lucro líquido atingir 2x o valor da taxa (~R$ 0,12 líquido)
+                  const trailingTriggerNet = Math.max(0.12, Number((feePlusFriction * 2.0).toFixed(2)));
+                  const trailingLockTriggerPrice = Number((avgPrice + ((trailingTriggerNet + estRoundtripFee) / executedQty)).toFixed(priceDecimals));
+
+                  // Trava mínima garantida no bolso quando aciona o trailing: 1.5x a taxa (~R$ 0,08 líquido)
+                  const lockedMinNet = Math.max(0.08, Number((feePlusFriction * 1.5).toFixed(2)));
+
+                  // Stop Loss proporcional (-1.8% a -2.0% ou ~R$ 0,25 a R$ 0,28)
+                  const stopLossAmount = Math.max(0.25, Number((cummulativeQuote * 0.018).toFixed(2)));
+                  const stopLossPrice = Number((avgPrice - (stopLossAmount / executedQty)).toFixed(priceDecimals));
+
+                  bot.openPosition = {
+                    symbol: asset.symbol,
+                    assetName: asset.name,
+                    baseAsset: asset.baseAsset,
+                    decimals: asset.decimals,
+                    side: 'LONG',
+                    entryPrice: avgPrice,
+                    qty: executedQty,
+                    notionalBrl: cummulativeQuote,
+                    orderId: order.orderId,
+                    openedAt: new Date().toLocaleTimeString('pt-BR'),
+                    openedTimestamp: Date.now(),
+                    targetTakeProfitPrice,
+                    targetProfitBrl: targetNetBrl,
+                    trailingLockTriggerPrice,
+                    stopLossPrice,
+                    trailingLocked: false,
+                    peakNetPnlBrl: 0,
+                    lockedMinNetPnlBrl: lockedMinNet,
+                    estRoundtripFee
+                  };
+
+                  const buyMsg = `🟢 [COMPRA REAL BINANCE] ${bot.name} comprou R$ ${cummulativeQuote.toFixed(2)} em ${asset.name} (ID: ${order.orderId})`;
+                  console.log(buyMsg);
+                  ecosystemState.hiveMind.recentInsights.unshift(buyMsg);
+                  ecosystemState.tradeLogs.unshift({
+                    botId: bot.id,
+                    botName: bot.name,
+                    symbol: bot.assignedAsset,
+                    action: 'BUY',
+                    price: avgPrice,
+                    amount: cummulativeQuote,
+                    timestamp: new Date().toLocaleTimeString('pt-BR'),
+                    realOrderId: order.orderId
+                  });
+
+                  // Notificação em tempo real no Telegram
+                  telegramNotifier.notifyBuy(bot.name, asset.name, asset.symbol, cummulativeQuote, avgPrice, order.orderId, targetTakeProfitPrice).catch(() => {});
+
+                  persistentState.saveState(ecosystemState);
+                  await cloudSync.syncEcosystemState(ecosystemState);
+                }
+              } finally {
+                isExecutingOrder = false;
+              }
             }
           }
         }
@@ -716,62 +1072,98 @@ async function startMultiAssetTrader() {
           if (!currentPrice) continue;
 
           const currentValBrl = pos.qty * currentPrice;
-          const pnlBrl = currentValBrl - pos.notionalBrl;
-          const pnlPct = (pnlBrl / pos.notionalBrl) * 100;
+          const grossPnlBrl = currentValBrl - pos.notionalBrl;
+          const grossPnlPct = (grossPnlBrl / pos.notionalBrl) * 100;
 
-          bot.dailyPnL = Number(pnlBrl.toFixed(2));
-          bot.currentCapital = Number((pos.notionalBrl + pnlBrl).toFixed(2));
+          // Custo Real de Taxas da Binance (0.10% compra + 0.10% venda = 0.20% total, ou 0.15% com BNB)
+          const hasBnb = balances.BNB && balances.BNB >= 0.001;
+          const feeRate = hasBnb ? 0.0015 : 0.0020;
+          const estimatedRoundtripFee = Number(((pos.notionalBrl || 20) * feeRate).toFixed(4));
+          const netPnlBrl = Number((grossPnlBrl - estimatedRoundtripFee).toFixed(2));
+          const netPnlPct = Number(((netPnlBrl / pos.notionalBrl) * 100).toFixed(2));
+
+          bot.dailyPnL = netPnlBrl;
+          bot.currentCapital = Number((pos.notionalBrl + netPnlBrl).toFixed(2));
 
           if (tickCount % 4 === 0) {
-            console.log(`[SCALPING ${pos.assetName}] Entrada: R$ ${pos.entryPrice.toFixed(2)} | Atual: R$ ${currentPrice.toFixed(2)} | PnL: ${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}% (R$ ${pnlBrl.toFixed(2)})`);
+            const pDec = pos.entryPrice < 1 ? 4 : (pos.entryPrice < 10 ? 3 : 2);
+            console.log(`[SCALPING ${pos.assetName}] Entrada: R$ ${pos.entryPrice.toFixed(pDec)} | Atual: R$ ${currentPrice.toFixed(pDec)} | Bruto: ${grossPnlPct >= 0 ? '+' : ''}${grossPnlPct.toFixed(2)}% (R$ ${grossPnlBrl.toFixed(2)}) | Líquido no Bolso: ${netPnlPct >= 0 ? '+' : ''}${netPnlPct.toFixed(2)}% (R$ ${netPnlBrl.toFixed(2)})`);
           }
 
-          // 1. TRAILING PROFIT LOCK: Quando o trade bate +1.0%, ativa trava de lucro garantido em +0.40%
-          if (!pos.trailingLocked && pnlPct >= (ecosystemState.trailingTriggerPct || 1.0)) {
+          // 1. TRAILING PROFIT LOCK DINÂMICO (FOLGA DE 3X A TAXA)
+          // Parâmetros mínimos de proteção calculados em relação ao custo da taxa
+          const minTargetNet = pos.targetProfitBrl || Math.max(0.22, Number((estimatedRoundtripFee * 3.5).toFixed(2)));
+          const trailingTriggerNet = Math.max(0.12, Number((estimatedRoundtripFee * 2.0).toFixed(2)));
+          const baseLockedNet = pos.lockedMinNetPnlBrl || Math.max(0.08, Number((estimatedRoundtripFee * 1.5).toFixed(2)));
+
+          // SÓ ativa o Trailing quando o lucro líquido já pagou 100% das taxas e deu pelo menos 2x a taxa de lucro líquido (+R$ 0,12+)
+          const isEligibleTrailing = (netPnlBrl >= trailingTriggerNet);
+          if (!pos.trailingLocked && isEligibleTrailing) {
             pos.trailingLocked = true;
-            pos.lockedMinProfitPct = ecosystemState.trailingLockPct || 0.40;
-            console.log(`🛡️ [TRAILING LOCK ATIVADO]: ${pos.assetName} bateu +${pnlPct.toFixed(2)}%! Lucro mínimo de +${pos.lockedMinProfitPct.toFixed(2)}% blindado no bolso!`);
+            pos.peakNetPnlBrl = netPnlBrl;
+            pos.lockedMinNetPnlBrl = baseLockedNet;
+            console.log(`🛡️ [TRAILING LOCK ATIVADO]: ${pos.assetName} bateu lucro LÍQUIDO de +R$ ${netPnlBrl.toFixed(2)} (+${netPnlPct.toFixed(2)}%)! Mínimo de +R$ ${baseLockedNet.toFixed(2)} blindado no bolso (3x taxa)!`);
           }
 
-          // 2. GATILHOS DE SAÍDA:
-          // - Take Profit Pleno (1.2% a 1.5%)
-          // - Saída por Trailing Lock (se reverter para +0.40% após bater +1.0%)
-          // - Stop Loss de Proteção (-0.90% se o trailing não tiver sido ativado)
-          const hitTakeProfit = pnlPct >= (ecosystemState.takeProfitMinPct || 1.20);
-          const hitTrailingExit = pos.trailingLocked && pnlPct <= (pos.lockedMinProfitPct || 0.40);
-          const hitStopLoss = !pos.trailingLocked && (pnlPct <= -ecosystemState.stopLossPctPerTrade);
+          // Se o preço subir ainda mais, a trava do Trailing Stop sobe colada atrás!
+          if (pos.trailingLocked) {
+            if (!pos.peakNetPnlBrl || netPnlBrl > pos.peakNetPnlBrl) {
+              pos.peakNetPnlBrl = netPnlBrl;
+              pos.lockedMinNetPnlBrl = Math.max(pos.lockedMinNetPnlBrl || baseLockedNet, Number((netPnlBrl - 0.05).toFixed(2)));
+            }
+          }
 
-          if (hitTakeProfit || hitTrailingExit || hitStopLoss) {
+          // 2. GATILHOS DE SAÍDA BASEADOS EM LUCRO LÍQUIDO (NO BOLSO):
+          // - Take Profit: bateu a meta com folga de 3x a taxa (+R$ 0,22 a +R$ 0,30 líquido)
+          // - Trailing Lock: recuou para a trava de lucro líquido blindado
+          // - Stop Loss: perda líquida de ~-1.8% a -2.0% (ou -R$ 0.25)
+          // - Trade Parado (Stale Trade Exit): após 60 min, só encerra se o lucro LÍQUIDO for de pelo menos 1.5x a taxa (+R$ 0.08 líquido no bolso)
+          const holdingTimeMs = Date.now() - (pos.openedTimestamp || (Date.now() - 60000));
+          const isStaleTrade = (holdingTimeMs > 60 * 60 * 1000) && (netPnlBrl >= baseLockedNet);
+
+          const hitTakeProfit = (netPnlBrl >= minTargetNet);
+          const hitTrailingExit = pos.trailingLocked && (netPnlBrl <= (pos.lockedMinNetPnlBrl || baseLockedNet));
+          const hitStopLoss = !pos.trailingLocked && (netPnlBrl <= (-(pos.notionalBrl * 0.020) || -0.25));
+
+          if ((hitTakeProfit || hitTrailingExit || hitStopLoss || isStaleTrade) && !isExecutingOrder) {
+            isExecutingOrder = true;
+            try {
             const reason = hitTakeProfit
-              ? `LUCRO MÁXIMO SCALPING (+${pnlPct.toFixed(2)}%)`
+              ? `LUCRO LÍQUIDO RÁPIDO (+R$ ${netPnlBrl.toFixed(2)} / +${netPnlPct.toFixed(2)}%)`
               : hitTrailingExit
-              ? `LUCRO GARANTIDO TRAILING (+${pnlPct.toFixed(2)}%)`
-              : `STOP LOSS PROTEGIDO (${pnlPct.toFixed(2)}%)`;
-            console.log(`🏁 [ENCERRANDO OPERAÇÃO]: ${reason} | Variação: ${pnlPct.toFixed(2)}% | R$ ${pnlBrl.toFixed(2)}`);
+              ? `TRAILING LOCK LÍQUIDO (+R$ ${netPnlBrl.toFixed(2)} / +${netPnlPct.toFixed(2)}%)`
+              : isStaleTrade
+              ? `ROTAÇÃO DE TRADE PARADO (>15 min no empate: ${netPnlBrl >= 0 ? '+' : ''}R$ ${netPnlBrl.toFixed(2)})`
+              : `STOP LOSS DE PROTEÇÃO (${netPnlPct.toFixed(2)}% / R$ ${netPnlBrl.toFixed(2)})`;
+            console.log(`🏁 [ENCERRANDO OPERAÇÃO]: ${reason} | Bruto: R$ ${grossPnlBrl.toFixed(2)} | Taxas Binance: -R$ ${estimatedRoundtripFee.toFixed(2)} | Líquido Real: R$ ${netPnlBrl.toFixed(2)}`);
 
             const sellResult = await executeRealMarketOrder(pos.symbol, 'SELL', null, pos.qty, pos.decimals, pos.baseAsset);
 
             if (sellResult && (sellResult.orderId || sellResult.status === 'FILLED')) {
               const finalQuote = parseFloat(sellResult.cummulativeQuoteQty) || currentValBrl;
-              const finalProfit = finalQuote - pos.notionalBrl;
+              const rawProfit = finalQuote - pos.notionalBrl;
+              const finalProfit = Number((rawProfit - estimatedRoundtripFee).toFixed(2));
 
-              bot.currentCapital = Number(finalQuote.toFixed(2));
+              bot.currentCapital = Number((bot.initialDayCapital + finalProfit).toFixed(2));
               bot.dailyPnL = Number(finalProfit.toFixed(2));
               bot.accumulatedCentsProfit = Number(((bot.accumulatedCentsProfit || 0) + finalProfit).toFixed(2));
               bot.openPosition = null;
+              assetSellCooldowns[pos.symbol] = Date.now() + (3 * 60 * 1000); // 3 minutos de cooldown nesta moeda
+              console.log(`⏳ [ROTAÇÃO INTELIGENTE]: Cooldown de 3 min ativado para ${pos.symbol} para rotação limpa de ativos.`);
 
               ecosystemState.hiveMind.totalTradesExecuted++;
               if (finalProfit > 0) {
                 ecosystemState.hiveMind.winningTrades++;
                 ecosystemState.hiveMind.collectiveIQ += 2;
+                bot.consecutiveLosses = 0;
               }
 
               // Circuit Breaker: Rastreia perdas consecutivas
               if (finalProfit < 0) {
                 bot.consecutiveLosses = (bot.consecutiveLosses || 0) + 1;
                 if (bot.consecutiveLosses >= 2) {
-                  bot.circuitBreakerUntil = Date.now() + (4 * 3600 * 1000);
-                  const cbMsg = `🛑 [CIRCUIT BREAKER] ${bot.name} atingiu 2 stops consecutivos. Pausado por 4h para proteção do capital!`;
+                  bot.circuitBreakerUntil = Date.now() + (3 * 60 * 1000); // 3 minutos de resfriamento
+                  const cbMsg = `🛑 [CIRCUIT BREAKER] ${bot.name} pausado por 3 min para proteção rápida.`;
                   console.log(cbMsg);
                   ecosystemState.hiveMind.recentInsights.unshift(cbMsg);
                 }
@@ -793,6 +1185,18 @@ async function startMultiAssetTrader() {
                 timestamp: new Date().toLocaleTimeString('pt-BR'),
                 realOrderId: sellResult.orderId
               });
+
+              // Notificação em tempo real no Telegram
+              telegramNotifier.notifySell(
+                bot.name,
+                pos.assetName,
+                pos.symbol,
+                finalProfit,
+                rawProfit,
+                estimatedRoundtripFee,
+                currentPrice,
+                ecosystemState.realBalances?.totalPatrimony || 53.56
+              ).catch(() => {});
 
               // ===============================================================
               // PLANO MESTRE LEAN SWARM (3X RESERVA, REGRA 80/20 & ESCALA DE LOTE)
@@ -855,19 +1259,25 @@ async function startMultiAssetTrader() {
                 }
               }
 
+              persistentState.saveState(ecosystemState);
               await cloudSync.syncEcosystemState(ecosystemState);
             }
+          } finally {
+            isExecutingOrder = false;
           }
         }
       }
+    }
 
       // Atualiza saldos reais e lista de ativos da Binance a cada 6 ticks (15s)
       if (tickCount % 6 === 0) {
-        await refreshBalancesAndAssets();
+        const refreshed = await refreshBalancesAndAssets();
+        if (refreshed && refreshed.balances) balances = refreshed.balances;
       }
 
-      // Sincroniza o estado atualizado no Firebase a cada 3 ticks
+      // Sincroniza o estado atualizado no Firebase e no disco a cada 3 ticks
       if (tickCount % 3 === 0) {
+        persistentState.saveState(ecosystemState);
         await cloudSync.syncEcosystemState(ecosystemState);
       }
     } catch (err) {

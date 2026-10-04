@@ -95,7 +95,9 @@ class FirebaseCloudSync {
         activeBots: state.activeBots,
         deadBots: (state.deadBots || []).slice(0, 25),
         dailyLedger: (state.dailyLedger || []).slice(0, 30),
-        tradeLogs: (state.tradeLogs || []).slice(0, 30)
+        tradeLogs: (state.tradeLogs || []).slice(0, 30),
+        marketScanner: state.marketScanner || [],
+        grokAdvisor: state.grokAdvisor || null
       };
 
       const res = await fetch(`${this.databaseURL}/nexus_darwin_ecosystem.json`, {

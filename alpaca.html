@@ -18,8 +18,8 @@
       <div class="brand-title">
         <h1>
           NEXUS WALL STREET
-          <span class="badge-live" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border-color: rgba(56, 189, 248, 0.4);">
-            ● SIMULADOR DEMO PAPER ($100K)
+          <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: rgba(16, 185, 129, 0.4);" id="alpacaConnBadge">
+            ● CONECTANDO ALPACA PAPER...
           </span>
         </h1>
         <div class="brand-subtitle">
@@ -66,8 +66,8 @@
         <span style="font-size: 1.1rem;">🛡️</span>
         <span><strong>AMBIENTE DE SIMULAÇÃO ISOLADO:</strong> As operações nesta página são 100% virtuais via <strong>Alpaca Paper Trading</strong>. O seu dinheiro real na Binance está intocável e separado.</span>
       </div>
-      <div style="font-size: 0.76rem; color: #bae6fd;">
-        Banca Demo: <strong>$ 100.000,00 USD</strong> virtuais para testes de estratégias
+      <div style="font-size: 0.76rem; color: #bae6fd;" id="bannerAccountNumber">
+        Conta: <strong>PA362KPGI7JH</strong> • Status: <strong>ATIVA & AUTORIZADA</strong> • Banca Demo: <strong>$ 100.000,00 USD</strong>
       </div>
     </div>
 
@@ -134,7 +134,6 @@
           </div>
 
           <!-- Tabs de Ações -->
-          <div style="display: flex; gap: 0.45rem; margin-bottom: 0.85rem; flex-wrap: wrap;" id="usAssetTabs">
             <button class="btn btn-primary" onclick="switchUSChart('NASDAQ:AAPL', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
               🍎 AAPL (Apple)
             </button>
@@ -153,11 +152,86 @@
             <button class="btn" onclick="switchUSChart('NASDAQ:AMZN', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
               📦 AMZN (Amazon)
             </button>
+            <button class="btn" onclick="switchUSChart('COINBASE:BTCUSD', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🟡 BTC/USD (24/7)
+            </button>
+            <button class="btn" onclick="switchUSChart('COINBASE:ETHUSD', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🔵 ETH/USD (24/7)
+            </button>
+            <button class="btn" onclick="switchUSChart('COINBASE:SOLUSD', this)" style="padding: 0.35rem 0.75rem; font-size: 0.76rem;">
+              🟣 SOL/USD (24/7)
+            </button>
           </div>
 
           <!-- Container do Gráfico TradingView -->
           <div id="tradingview_chart_container" style="height: 400px; width: 100%; border-radius: 8px; overflow: hidden; background: #0b0e14; border: 1px solid rgba(255,255,255,0.08);">
             <iframe id="us_tv_iframe" src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_chart&symbol=NASDAQ%3AAAPL&interval=15&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=0b0e14&studies=%5B%5D&theme=dark&style=1&timezone=America%2FNew_York&studies_overrides=%7B%7D&overrides=%7B%7D&enabled_features=%5B%5D&disabled_features=%5B%5D&locale=br" style="width: 100%; height: 100%; border: none;"></iframe>
+          </div>
+        </section>
+
+        <!-- Painel Carteira de Alta Performance Wall Street (Meta $200k) -->
+        <section class="section-panel" style="border: 1px solid rgba(56, 189, 248, 0.4); background: linear-gradient(145deg, rgba(14, 25, 45, 0.9), rgba(10, 16, 30, 0.95));">
+          <div class="section-header">
+            <div class="section-title">
+              <span>🏛️ Carteira de Tecnologia & IA (Alocação Rumo aos $200k)</span>
+            </div>
+            <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border-color: rgba(16, 185, 129, 0.4);">
+              ● ALOCAÇÃO ATIVA ($85K ALOCADOS)
+            </span>
+          </div>
+
+          <!-- Cards de Ativos Alocados -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem; margin-bottom: 0.85rem;">
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);">
+              <div style="font-size: 0.70rem; color: #38bdf8; font-weight: 700;">🤖 NVDA (Nvidia)</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; margin-top: 0.2rem;">$ 20.000,00</div>
+              <div style="font-size: 0.66rem; color: #10b981;">● 20% • Ordem Aceita</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);">
+              <div style="font-size: 0.70rem; color: #38bdf8; font-weight: 700;">🚗 TSLA (Tesla)</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; margin-top: 0.2rem;">$ 20.000,00</div>
+              <div style="font-size: 0.66rem; color: #10b981;">● 20% • Ordem Aceita</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);">
+              <div style="font-size: 0.70rem; color: #38bdf8; font-weight: 700;">🍎 AAPL (Apple)</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; margin-top: 0.2rem;">$ 15.010,00</div>
+              <div style="font-size: 0.66rem; color: #10b981;">● 15% • Ordem Aceita</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);">
+              <div style="font-size: 0.70rem; color: #38bdf8; font-weight: 700;">💻 MSFT (Microsoft)</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; margin-top: 0.2rem;">$ 15.000,00</div>
+              <div style="font-size: 0.66rem; color: #10b981;">● 15% • Ordem Aceita</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);">
+              <div style="font-size: 0.70rem; color: #38bdf8; font-weight: 700;">📦 AMZN (Amazon)</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #f8fafc; margin-top: 0.2rem;">$ 15.000,00</div>
+              <div style="font-size: 0.66rem; color: #10b981;">● 15% • Ordem Aceita</div>
+            </div>
+            <div style="background: rgba(255, 255, 255, 0.03); padding: 0.6rem; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2);">
+              <div style="font-size: 0.70rem; color: #fbbf24; font-weight: 700;">💵 Caixa Reserva</div>
+              <div style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-top: 0.2rem;">$ 14.990,00</div>
+              <div style="font-size: 0.66rem; color: #94a3b8;">● 15% • Disponível</div>
+            </div>
+          </div>
+
+          <!-- Parecer Groq LPU -->
+          <div style="background: rgba(0, 0, 0, 0.35); padding: 0.75rem 0.85rem; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.76rem; line-height: 1.5; color: #e2e8f0;">
+            <strong style="color: #38bdf8;">🧠 Parecer Quantitativo Groq LPU:</strong> A alocação foi distribuída nas 5 maiores líderes de inteligência artificial e tecnologia de Wall Street, somando <strong>$85.000 alocados</strong>. Mantivemos <strong>$14.990 (15%)</strong> em caixa estratégico para aproveitar correções e oportunidades de swing trade na reabertura do pregão.
+          </div>
+        </section>
+
+        <!-- Posições Abertas ao Vivo na Alpaca Paper -->
+        <section class="section-panel" style="border: 1px solid rgba(16, 185, 129, 0.4);">
+          <div class="section-header">
+            <div class="section-title">
+              <span>📊 Posições Abertas em Execução ao Vivo (Alpaca Paper)</span>
+            </div>
+            <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">● ATIVAS AGORA</span>
+          </div>
+          <div id="alpacaPositionsContainer">
+            <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-size: 0.8rem;">
+              Carregando posições da conta Alpaca...
+            </div>
           </div>
         </section>
 
@@ -202,6 +276,9 @@
                 <option value="MSFT">Microsoft Corp. (MSFT)</option>
                 <option value="SPY">SPDR S&P 500 ETF (SPY)</option>
                 <option value="AMZN">Amazon.com, Inc. (AMZN)</option>
+                <option value="BTC/USD">🟡 Bitcoin (BTC/USD) - Ativo 24/7</option>
+                <option value="ETH/USD">🔵 Ethereum (ETH/USD) - Ativo 24/7</option>
+                <option value="SOL/USD">🟣 Solana (SOL/USD) - Ativo 24/7</option>
               </select>
             </div>
 
@@ -232,29 +309,30 @@
           </form>
         </section>
 
-        <!-- Configuração Opcional de API Key da Alpaca (Salva apenas no seu navegador) -->
-        <section class="section-panel">
+        <!-- Configuração das Chaves de API Alpaca Paper -->
+        <section class="section-panel" style="border: 1px solid rgba(16, 185, 129, 0.4);">
           <div class="section-header">
             <div class="section-title">
-              <span>🔑 Chaves de API Alpaca Paper (Opcional)</span>
+              <span>🔑 Chaves de API Alpaca Paper (Ativas)</span>
             </div>
+            <span class="badge-live" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">● CONECTADA</span>
           </div>
 
           <div style="font-size: 0.76rem; color: var(--text-secondary); margin-bottom: 0.85rem;">
-            Se você já gerou suas chaves de Paper Trading em <strong>alpaca.markets</strong>, pode colocá-las aqui para consultar seu saldo real do simulador. Fica gravado apenas no seu próprio navegador.
+            Chaves de Paper Trading configuradas e operacionais para a conta <strong style="color: #38bdf8;">PA362KPGI7JH</strong>.
           </div>
 
           <form id="alpacaKeyForm">
             <div class="form-group">
-              <label for="alpacaPaperKey">Alpaca Paper Key ID (PK...)</label>
-              <input type="password" id="alpacaPaperKey" class="form-control" placeholder="PK..." />
+              <label for="alpacaPaperKey">Alpaca Paper Key ID</label>
+              <input type="text" id="alpacaPaperKey" class="form-control" value="PK5WU4MBN5X5QOHZFRGNXBWMDA" readonly />
             </div>
             <div class="form-group">
               <label for="alpacaPaperSecret">Alpaca Paper Secret Key</label>
-              <input type="password" id="alpacaPaperSecret" class="form-control" placeholder="Secret Key..." />
+              <input type="password" id="alpacaPaperSecret" class="form-control" value="GfC4EWSUuf5zmVV2VUtEPtrjcXmeaBFt9puGoLoDXhtx" />
             </div>
             <button type="submit" class="btn btn-cyan" style="width: 100%; justify-content: center;">
-              💾 Salvar Chaves Demo no Navegador
+              🔄 Sincronizar Saldo & Ordens Agora
             </button>
           </form>
         </section>
@@ -267,6 +345,6 @@
     NEXUS WALL STREET • Simulador Demo Alpaca Markets • 100% Isolado da Operação Binance Real
   </footer>
 
-  <script src="alpaca.js?v=1.0.0"></script>
+  <script src="alpaca.js?v=2.2.0"></script>
 </body>
 </html>

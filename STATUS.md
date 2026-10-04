@@ -1,68 +1,74 @@
 # 📊 STATUS DO PROJETO - NEXUS DARWIN AI
 **Última Atualização:** 03 de Outubro de 2026  
-**Status Operacional:** 🟢 100% OPERACIONAL & ONLINE NA BINANCE REAL (CONEXÃO VALIDADA)
+**Status Operacional:** 🟢 100% OPERACIONAL & ONLINE NA BINANCE REAL (CONEXÃO VALIDADA) + SIMULADOR ALPACA ATIVO
 
 ---
 
 ## 1. 💼 Saldo Real Atual na Binance Brasil
-* **BRL Livre (Spot):** R$ 5,13  
-* **Dólar Digital (LDUSDC no Simple Earn flexível):** 1.6430 USDC (~R$ 8,61)  
-* **Patrimônio Total Real na Conta:** **R$ 13,74**  
-* **Próximo Aporte Planejado:** R$ 100,00 (PIX a ser depositado para escalabilidade de lotes).
+* **BRL Livre (Spot):** R$ 20,58 (Disponível para novas oportunidades de repique)  
+* **Dólar Digital (Cofre USDC no Simple Earn flexível):** 1.8235 USDC (~R$ 9,56 rendendo juros diários)  
+* **Cripto em Operação no Scalping:**
+  * **Robô #1 (Alpha Titans):** 0.031 SOL (Entrada: R$ 625,90 | ~R$ 19,43 em operação)
+  * **Robô #2 (Beta Speed):** 0.0012446 BNB (Entrada: R$ 4.039,00 | ~R$ 5,03 em operação)
+* **Patrimônio Total Real na Conta:** **R$ 54,51**  
+* **Regra de Ouro Ativa:** 80% do lucro reinvestido para escalar os robôs / 20% varrido para o cofre seguro de emergência.
 
 ---
 
-## 2. 🟢 IPs Autorizados e Ativos na Binance
-A lista de IPs confiáveis na chave de API da Binance foi validada com sucesso:
-* `45.226.119.62`
-* `45.226.119.107` (IP Atual Ativo)
-* `45.226.119.246`
-* **Status da Conexão:** HTTP 200 OK | Autenticação Spot & Convert 100% Liberada.
+## 2. 🧠 Central Estratégica da IA (Grok & Groq LPU)
+O ecossistema conta agora com um Conselho de Inteligência Artificial integrado ao motor de risco:
+* **Groq LPU (Hardware de Ultra-Velocidade):**
+  * Modelo: `openai/gpt-oss-120b` (120 Bilhões de parâmetros).
+  * Latência recorde: **~900ms** (menos de 1 segundo de tempo de resposta).
+  * Chave configurada: API Key oficial da Groq ativa.
+* **Grok 2.0 (xAI de Elon Musk):**
+  * Suporte nativo implementado em `grok_advisor.js` para integração imediata via `xai-...`.
+* **Função no Ecossistema:**
+  * Avalia o índice de força do mercado nos 16 pares monitorados.
+  * Define se o ambiente é de "Scalp com Trailing" ou "Defensivo".
+  * Fornece parecer estratégico em português do Brasil direcionado ao operador (Pablo).
+  * Alimenta o Firebase Realtime Database em `/nexus_darwin_ecosystem/grokAdvisor.json`.
 
 ---
 
-## 3. 🧠 Arquitetura do Motor & Pilares Implementados
-
-### PILAR A: Radar Dinâmico Multi-Cripto (16 Ativos Líquidos em BRL)
-O robô não fica preso a 3 ou 4 moedas. Ele escaneia continuamente os 16 pares mais líquidos negociados em Reais na Binance:
-* **BTC/BRL, ETH/BRL, SOL/BRL, BNB/BRL, XRP/BRL, DOGE/BRL, ADA/BRL, LINK/BRL, AVAX/BRL, NEAR/BRL, SUI/BRL, RENDER/BRL, LTC/BRL, POL/BRL, PEPE/BRL, USDC/BRL**.
-* **Critério de Seleção:** Mede RSI e médias EMA em tempo real. Entra sempre no ativo que estiver em ponto ideal de sobrevenda (mais barato e com repique iminente).
-
-### Trailing Profit Lock (Blindagem Profissional de Lucro)
-* **Gatilho de Ativação:** Ao bater **+1,00% de lucro**, o robô ativa a trava de proteção.
-* **Saída Garantida no Lucro:** Se o mercado reverter, encerra com no mínimo **+0,40% de lucro líquido** no bolso (nunca deixa trade vencedor virar perdedor).
-* **Take Profit Pleno:** Busca de **+1,20% a +1,50%** no topo da onda de scalping.
-* **Stop Loss Cirúrgico:** Travado em **-0,90%** se a operação não andar a favor desde o início.
-
-### Execução Fracionária Sem Trava (Binance Convert API)
-* Bypassa o limite rígido de R$ 10,00 do Spot tradicional.
-* Ordens executam com frações a partir de R$ 0,05 com **zero taxa de corretagem**, tanto na compra quanto na venda.
+## 3. 🕯️ HUD de Velas (Candlesticks) & Entrada dos Robôs
+* **Gráfico Oficial TradingView (style=1 - Candlesticks Japoneses):**
+  * Intervalos selecionáveis: 1m, 5m, 15m, 1h.
+  * Seletores instantâneos: Velas SOL (Robô #1), Velas BNB (Robô #2), BTC, ETH, XRP, DOGE.
+* **Termômetro Visual do Trade:**
+  * Mostra onde o preço da vela atual está exatamente posicionado entre o Stop Loss e o Take Profit.
+  * **Alvo de Lucro:** +1,50%
+  * **Trailing Stop:** +1,00% (com trava mínima garantida de +0,40%)
+  * **Stop Loss:** -0,90%
+* **Radar Dinâmico Multi-Cripto (16 Ativos Líquidos em BRL):**
+  * BTC, ETH, SOL, BNB, XRP, DOGE, ADA, LINK, AVAX, NEAR, SUI, RENDER, LTC, POL, PEPE, USDC.
+  * Tabela com Preço, Variação 24h, RSI (Sobrevenda/Sobrecompra), Tendência e Status.
+* **Histórico de Ordens Reais:**
+  * Tabela com PnL flutuante ao vivo e PnL realizado.
 
 ---
 
-## 4. 📈 Resultado do Backtest Real (27/09 a 01/10 - 90 Horas)
-* **Condição do Mercado no Período:** Mercado geral em queda (Solana caiu -3,22%, Bitcoin caiu -0,59%).
-* **Quem comprou e segurou (Buy & Hold):** Perdeu dinheiro.
-* **Desempenho do Robô de Scalping:**
-  * Total de Trades: 11
-  * Vitórias: 6 (54,5%)
-  * Stops Protegidos: 5 (45,5%)
-  * **Rentabilidade Líquida:** **+2,68% a +3,40% em 3,5 dias** (R$ 10,00 ➡️ R$ 10,27 / R$ 10,34).
-  * Todas as moedas operadas individualmente (BNB, ETH, SOL, BTC) fecharam no positivo!
+## 4. 🌐 Status das Plataformas & Produção Vercel
+* **Dashboard Oficial de Produção:**
+  * **URL:** `https://nexus-darwin-ai.vercel.app/` (HTTP 200 OK | Versão v=4.0.2).
+  * Exibe os 4 KPIs de Capital, Central da IA Grok/Groq, HUD de Velas, Radar de 16 ativos e Ordens.
+* **Página da Bolsa Americana (Alpaca Paper Trading):**
+  * **URL:** `https://nexus-darwin-ai.vercel.app/alpaca.html` (HTTP 200 OK).
+  * Erro 404 resolvido definitivamente com o deployer direto da Vercel.
+* **Publicador Direto da Vercel (`deploy_to_vercel.js`):**
+  * Faz upload direto via API REST (`POST /v2/files` + `POST /v13/deployments`).
+  * Bypassa limitações de escopo do CLI da Vercel para tokens de projeto.
+  * Script de 1 clique: `PUBLICAR_AGORA.bat`.
+* **Operador Local em Execução:**
+  * `real_binance_operator.js` rodando em background conectado à Binance Brasil e Firebase RTDB.
 
 ---
 
-## 5. 🌐 Status das Plataformas de Deploy
-* **Local (PC do Usuário):** `node real_binance_operator.js` ou duplo-clique em `INICIAR_OPERADOR_REAL.bat`.
-* **GitHub Repository:** Repositório sincronizado em branch `main`.
-* **Vercel (Dashboard Frontend):** Deploy automático integrado ao GitHub (`https://nexus-darwin-ai.vercel.app/`).
-* **Railway (Opção Backend em Nuvem 24/7):** Configurado via `railway.json` e `Procfile`.
-* **Firebase Cloud Sync:** Sincronização em tempo real de estado, robôs ativos, histórico de trades e saldos.
-
----
-
-## 6. 🗺️ Plano de Escala (Rumo aos 100 Robôs)
-1. **Fase 1 (Atual):** 1 Robô operando o Radar Dinâmico com capital base.
-2. **Fase 2 (Hoje c/ Aporte de R$ 100):** Operar lotes de R$ 25 a R$ 30, multiplicando os ganhos por trade em 3x a 4x.
-3. **Fase 3 (Sweep do Cofre):** A cada +R$ 10,00 de lucro somado, envia R$ 10 para a Carteira Funding da Binance (blindada) e clona um novo robô independente.
-4. **Fase 4 (Meta Final):** 100 robôs operando simultaneamente todo o mercado.
+## 5. 🇺🇸 Próxima Fase: Expansão Wall Street (Alpaca Paper Trading)
+* **Ambiente:** Simulador Demo de Ações Americanas (NYSE / NASDAQ).
+* **Capital Virtual:** $100.000,00 USD (Paper Trading isolado da Binance Real).
+* **Ativos-Alvo:** AAPL (Apple), TSLA (Tesla), NVDA (Nvidia), MSFT (Microsoft), SPY (S&P 500), AMZN (Amazon).
+* **Objetivo Imediato:**
+  1. Conectar chaves de Paper Trading da Alpaca.
+  2. Testar ordens fracionadas automáticas via API `/api/alpaca-order`.
+  3. Criar robô de swing trade/scalping em ações americanas rodando em paralelo aos robôs de cripto.
