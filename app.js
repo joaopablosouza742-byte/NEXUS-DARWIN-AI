@@ -6,9 +6,14 @@
  */
 
 // Global currency formatter accessible in all scopes and functions
-function formatCurrency(val) {
+function formatCurrency(val, forceDecimals = null) {
   const num = Number(val) || 0;
-  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  if (forceDecimals !== null) {
+    return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: forceDecimals, maximumFractionDigits: forceDecimals });
+  }
+  const abs = Math.abs(num);
+  const dec = abs === 0 ? 2 : (abs < 1 ? 4 : (abs < 10 ? 3 : 2));
+  return num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: dec, maximumFractionDigits: dec });
 }
 window.formatCurrency = formatCurrency;
 
@@ -260,10 +265,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const bot1PnlPct = (bot1Qty > 0 && bot1Entry > 0) ? (((bot1Price - bot1Entry) / bot1Entry) * 100) : 0;
       const bot1PnlBrl = bot1GrossPnlBrl;
 
-      // Alvos Robô #1 (Meta: +R$ 0,05 líquido no bolso com Trailing Lock +R$ 0,03)
-      const bot1UnitTarget = pos1?.targetTakeProfitPrice || (bot1Entry + ((0.05 + bot1Fee) / (bot1Qty || 0.02)));
-      const bot1UnitTrail = pos1?.trailingLockTriggerPrice || (bot1Entry + ((0.03 + bot1Fee) / (bot1Qty || 0.02)));
-      const bot1UnitStop = pos1?.stopLossPrice || (bot1Entry - (0.06 / (bot1Qty || 0.02)));
+      // Alvos Robô #1 (Meta Institucional: 3x a Taxa, +R$ 0,22 líq. no bolso)
+      const bot1TargetProfit = pos1?.targetProfitBrl || 0.22;
+      const bot1TrailProfit = pos1?.lockedMinNetPnlBrl || 0.08;
+      const bot1UnitTarget = pos1?.targetTakeProfitPrice || Number((bot1Entry * 1.018).toFixed(bot1Entry < 1 ? 4 : (bot1Entry < 10 ? 3 : 2)));
+      const bot1UnitTrail = pos1?.trailingLockTriggerPrice || Number((bot1Entry * 1.011).toFixed(bot1Entry < 1 ? 4 : (bot1Entry < 10 ? 3 : 2)));
+      const bot1UnitStop = pos1?.stopLossPrice || Number((bot1Entry * 0.982).toFixed(bot1Entry < 1 ? 4 : (bot1Entry < 10 ? 3 : 2)));
 
       // Robô #2: Valores e PnL (Bruto e Líquido Real após taxas da Binance)
       const bot2Entry = pos2 ? (parseFloat(pos2.entryPrice) || 0) : (priceMap[bot2Symbol] || ltcPrice);
@@ -280,15 +287,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       const bot2PnlPct = (bot2Qty > 0 && bot2Entry > 0) ? (((bot2Price - bot2Entry) / bot2Entry) * 100) : 0;
       const bot2PnlBrl = bot2GrossPnlBrl;
 
-      // Alvos Robô #2 (Meta: +R$ 0,05 líquido no bolso com Trailing Lock +R$ 0,03)
-      const bot2UnitTarget = pos2?.targetTakeProfitPrice || (bot2Entry + ((0.05 + bot2Fee) / (bot2Qty || 0.037)));
-      const bot2UnitTrail = pos2?.trailingLockTriggerPrice || (bot2Entry + ((0.03 + bot2Fee) / (bot2Qty || 0.037)));
-      const bot2UnitStop = pos2?.stopLossPrice || (bot2Entry - (0.06 / (bot2Qty || 0.037)));
+      // Alvos Robô #2 (Meta Institucional: 3x a Taxa, +R$ 0,22 líq. no bolso)
+      const bot2TargetProfit = pos2?.targetProfitBrl || 0.22;
+      const bot2TrailProfit = pos2?.lockedMinNetPnlBrl || 0.08;
+      const bot2UnitTarget = pos2?.targetTakeProfitPrice || Number((bot2Entry * 1.018).toFixed(bot2Entry < 1 ? 4 : (bot2Entry < 10 ? 3 : 2)));
+      const bot2UnitTrail = pos2?.trailingLockTriggerPrice || Number((bot2Entry * 1.011).toFixed(bot2Entry < 1 ? 4 : (bot2Entry < 10 ? 3 : 2)));
+      const bot2UnitStop = pos2?.stopLossPrice || Number((bot2Entry * 0.982).toFixed(bot2Entry < 1 ? 4 : (bot2Entry < 10 ? 3 : 2)));
 
       // Guarda estado para o motor WebSocket atualizar em tempo real a cada tick da Binance
       window.currentEcosystemData = {
-        bot1Coin, bot1Symbol, bot1Qty, bot1Entry, bot1Fee, bot1UnitTarget, bot1UnitTrail, bot1UnitStop,
-        bot2Coin, bot2Symbol, bot2Qty, bot2Entry, bot2Fee, bot2UnitTarget, bot2UnitTrail, bot2UnitStop,
+        bot1Coin, bot1Symbol, bot1Qty, bot1Entry, bot1Fee, bot1UnitTarget, bot1UnitTrail, bot1UnitStop, bot1TargetProfit, bot1TrailProfit,
+        bot2Coin, bot2Symbol, bot2Qty, bot2Entry, bot2Fee, bot2UnitTarget, bot2UnitTrail, bot2UnitStop, bot2TargetProfit, bot2TrailProfit,
         brlFree, usdcVal
       };
 
@@ -480,7 +489,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         alphaLivePnL.textContent = `${bot1PnlPct >= 0 ? '+' : ''}${bot1PnlPct.toFixed(2)}% (${bot1PnlBrl >= 0 ? '+' : ''}${formatCurrency(bot1PnlBrl)})`;
         alphaLivePnL.style.color = bot1PnlPct >= 0 ? '#10b981' : '#ef4444';
       } else {
-        alphaLivePnL.textContent = '🟢 LUCRO REALIZADO (+R$ 0,05)';
+        alphaLivePnL.textContent = '🟢 LUCRO REALIZADO (3x TAXA)';
         alphaLivePnL.style.color = '#10b981';
       }
     }
@@ -492,20 +501,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const alphaTargetEl = document.getElementById('alphaTargetPrice');
     if (alphaTargetEl) {
-      alphaTargetEl.textContent = bot1Qty > 0 || pos1
-        ? `${formatCurrency(bot1UnitTarget)} (+R$ 0,05 líq. no bolso)`
+      alphaTargetEl.textContent = (bot1Qty > 0 || pos1)
+        ? `${formatCurrency(bot1UnitTarget)} (+R$ ${bot1TargetProfit.toFixed(2)} líq. 3x taxa)`
         : 'Vendido no Lucro! Scanner buscando nova entrada...';
     }
     const alphaTrailEl = document.getElementById('alphaTrailingPrice');
     if (alphaTrailEl) {
-      alphaTrailEl.textContent = bot1Qty > 0 || pos1
-        ? `Ativa em ${formatCurrency(bot1UnitTrail)} (+R$ 0,03 líq.)`
-        : 'Concluído com Sucesso (+R$ 0,05)';
+      alphaTrailEl.textContent = (bot1Qty > 0 || pos1)
+        ? `Ativa em ${formatCurrency(bot1UnitTrail)} (+R$ ${bot1TrailProfit.toFixed(2)} líq.)`
+        : 'Concluído com Sucesso';
     }
     const alphaStopEl = document.getElementById('alphaStopPrice');
     if (alphaStopEl) {
-      alphaStopEl.textContent = bot1Qty > 0 || pos1
-        ? `${formatCurrency(bot1UnitStop)} (-R$ 0,06)`
+      alphaStopEl.textContent = (bot1Qty > 0 || pos1)
+        ? `${formatCurrency(bot1UnitStop)} (Stop -1.8%)`
         : 'Capital 100% Protegido';
     }
 
@@ -513,7 +522,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const alphaDistEl = document.getElementById('alphaDistTarget');
     if (alphaDistEl) {
       alphaDistEl.textContent = bot1Qty > 0 || pos1
-        ? (bot1Price >= bot1UnitTarget ? 'Meta de Centavos Batida!' : `${alphaDistPct.toFixed(2)}% para bater meta`)
+        ? (bot1Price >= bot1UnitTarget ? 'Meta 3x Taxa Batida!' : `${alphaDistPct.toFixed(2)}% para bater meta`)
         : 'Scanner rastreando moedas no radar';
     }
 
@@ -550,7 +559,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         betaLivePnL.textContent = `${bot2PnlPct >= 0 ? '+' : ''}${bot2PnlPct.toFixed(2)}% (${bot2PnlBrl >= 0 ? '+' : ''}${formatCurrency(bot2PnlBrl)})`;
         betaLivePnL.style.color = bot2PnlPct >= 0 ? '#10b981' : '#ef4444';
       } else {
-        betaLivePnL.textContent = `🟢 LUCRO REALIZADO (+R$ 0,05)`;
+        betaLivePnL.textContent = `🟢 LUCRO REALIZADO (3x TAXA)`;
         betaLivePnL.style.color = '#10b981';
       }
     }
@@ -561,15 +570,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const betaTargetEl = document.getElementById('betaTargetPrice');
     if (betaTargetEl) {
-      betaTargetEl.textContent = bot2Qty > 0 || pos2 ? `${formatCurrency(bot2UnitTarget)} (+R$ 0,05 líq. no bolso)` : 'Vendido no Lucro! Scanner buscando nova entrada...';
+      betaTargetEl.textContent = (bot2Qty > 0 || pos2)
+        ? `${formatCurrency(bot2UnitTarget)} (+R$ ${bot2TargetProfit.toFixed(2)} líq. 3x taxa)`
+        : 'Vendido no Lucro! Scanner buscando nova entrada...';
     }
     const betaTrailEl = document.getElementById('betaTrailingPrice');
     if (betaTrailEl) {
-      betaTrailEl.textContent = bot2Qty > 0 || pos2 ? `Ativa em ${formatCurrency(bot2UnitTrail)} (+R$ 0,03 líq.)` : 'Concluído com Sucesso (+R$ 0,05)';
+      betaTrailEl.textContent = (bot2Qty > 0 || pos2)
+        ? `Ativa em ${formatCurrency(bot2UnitTrail)} (+R$ ${bot2TrailProfit.toFixed(2)} líq.)`
+        : 'Concluído com Sucesso';
     }
     const betaStopEl = document.getElementById('betaStopPrice');
     if (betaStopEl) {
-      betaStopEl.textContent = bot2Qty > 0 || pos2 ? `${formatCurrency(bot2UnitStop)} (-R$ 0,06)` : 'Capital 100% Protegido';
+      betaStopEl.textContent = (bot2Qty > 0 || pos2)
+        ? `${formatCurrency(bot2UnitStop)} (Stop -1.8%)`
+        : 'Capital 100% Protegido';
     }
 
     const bot2DistPct = Math.max(0, ((bot2UnitTarget - bot2Price) / bot2Price) * 100);
@@ -693,8 +708,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             </span>
           </td>
           <td>
-            <div style="font-size: 0.72rem; color: #10b981;">Alvo: ${formatCurrency(bot1UnitTarget)} (+R$ 0,05)</div>
-            <div style="font-size: 0.68rem; color: #ef4444;">Stop: ${formatCurrency(bot1UnitStop)} (-R$ 0,06)</div>
+            <div style="font-size: 0.72rem; color: #10b981;">Alvo: ${formatCurrency(bot1UnitTarget)} (+R$ ${targetProfit.toFixed(2)})</div>
+            <div style="font-size: 0.68rem; color: #ef4444;">Stop: ${formatCurrency(bot1UnitStop)} (-1.8%)</div>
           </td>
           <td>
             <span class="tag-badge tag-trading">⚡ OPERANDO AO VIVO</span>
@@ -713,7 +728,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td><strong style="color: #38bdf8;">Scanner Ativo</strong></td>
           <td>
             <span style="font-weight: 800; color: #10b981;">
-              +R$ 0,05 Realizado
+              +R$ 0,22 Realizado
             </span>
           </td>
           <td>
@@ -742,8 +757,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             </span>
           </td>
           <td>
-            <div style="font-size: 0.72rem; color: #10b981;">Alvo: ${formatCurrency(bot2UnitTarget)} (+R$ 0,05)</div>
-            <div style="font-size: 0.68rem; color: #ef4444;">Stop: ${formatCurrency(bot2UnitStop)} (-R$ 0,06)</div>
+            <div style="font-size: 0.72rem; color: #10b981;">Alvo: ${formatCurrency(bot2UnitTarget)} (+R$ ${targetProfit.toFixed(2)})</div>
+            <div style="font-size: 0.68rem; color: #ef4444;">Stop: ${formatCurrency(bot2UnitStop)} (-1.8%)</div>
           </td>
           <td>
             <span class="tag-badge tag-trading">⚡ OPERANDO AO VIVO</span>
@@ -762,7 +777,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td><strong style="color: #38bdf8;">Scanner Ativo</strong></td>
           <td>
             <span style="font-weight: 800; color: #10b981;">
-              +R$ 0,05 Realizado
+              +R$ 0,22 Realizado
             </span>
           </td>
           <td>
@@ -784,8 +799,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         closedOrdersTbody.innerHTML = `
           <tr>
             <td colspan="8" style="text-align: center; padding: 1.25rem; color: var(--text-muted);">
-              🟢 Os Robôs #1 e #2 estão operando com alvo ultra-rápido de +R$ 0,05 de lucro com Trailing Stop.
-              Assim que a oscilação rápida bater a meta ou o Trailing travar os centavos no bolso, o lucro realizado aparecerá aqui automaticamente.
+              🟢 Os Robôs #1 e #2 estão operando com alvo institucional de +R$ 0,22 líq. (3x a taxa) com Trailing Stop.
+              Assim que a oscilação rápida bater a meta ou o Trailing travar o lucro no bolso, o resultado aparecerá aqui automaticamente.
             </td>
           </tr>
         `;
@@ -880,11 +895,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const grokTargetEl = document.getElementById('grokTargetVal');
     if (grokTargetEl) {
-      grokTargetEl.textContent = `+R$ 0,05 (Scalp Centavos)`;
+      grokTargetEl.textContent = `+R$ 0,22 (3x Taxa)`;
     }
     const grokStopEl = document.getElementById('grokStopVal');
     if (grokStopEl) {
-      grokStopEl.textContent = `-R$ 0,06 (Protegido)`;
+      grokStopEl.textContent = `-1.8% (Protegido)`;
     }
     const grokTimeEl = document.getElementById('grokUpdatedTime');
     if (grokTimeEl && grok.updatedAt) {
@@ -947,11 +962,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         alphaLivePnL.style.color = netPnlBrl >= 0 ? '#10b981' : '#ef4444';
       }
 
-      const bot1UnitTarget = d.bot1UnitTarget || (d.bot1Entry + (0.05 / (d.bot1Qty || 0.02)));
+      const bot1UnitTarget = d.bot1UnitTarget || (d.bot1Entry * 1.018);
       const distPct = Math.max(0, ((bot1UnitTarget - price) / price) * 100);
       const alphaDistEl = document.getElementById('alphaDistTarget');
       if (alphaDistEl) {
-        alphaDistEl.textContent = price >= bot1UnitTarget ? 'Meta Batida! (+R$ 0,05 no bolso)' : `${distPct.toFixed(2)}% para bater meta (+R$ 0,05 líq.)`;
+        alphaDistEl.textContent = price >= bot1UnitTarget ? 'Meta Batida! (+R$ 0,22 no bolso)' : `${distPct.toFixed(2)}% para bater meta (+R$ 0,22 líq.)`;
       }
 
       const alphaProgress = price >= bot1UnitTarget ? 100 : Math.min(95, Math.max(10, Math.round(((price - (d.bot1Entry * 0.995)) / (bot1UnitTarget - (d.bot1Entry * 0.995))) * 100)));
@@ -982,11 +997,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         betaLivePnL.style.color = netPnlBrl >= 0 ? '#10b981' : '#ef4444';
       }
 
-      const bot2UnitTarget = d.bot2UnitTarget || (d.bot2Entry + (0.05 / (d.bot2Qty || 0.037)));
+      const bot2UnitTarget = d.bot2UnitTarget || (d.bot2Entry * 1.018);
       const distPct = Math.max(0, ((bot2UnitTarget - price) / price) * 100);
       const betaDistEl = document.getElementById('betaDistTarget');
       if (betaDistEl) {
-        betaDistEl.textContent = price >= bot2UnitTarget ? 'Meta Batida! (+R$ 0,05 no bolso)' : `${distPct.toFixed(2)}% para bater meta (+R$ 0,05 líq.)`;
+        betaDistEl.textContent = price >= bot2UnitTarget ? 'Meta Batida! (+R$ 0,22 no bolso)' : `${distPct.toFixed(2)}% para bater meta (+R$ 0,22 líq.)`;
       }
 
       const bot2Progress = price >= bot2UnitTarget ? 100 : Math.min(95, Math.max(10, Math.round(((price - (d.bot2Entry * 0.995)) / (bot2UnitTarget - (d.bot2Entry * 0.995))) * 100)));
@@ -1001,16 +1016,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updateHudRealtimeTick(curPrice, entryPrice, pnlPct, pnlBrl, targetPrice, qty, trailPrice, stopPrice) {
     const curEl = document.getElementById('hudCurrentPrice');
-    if (curEl) curEl.textContent = `R$ ${curPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    if (curEl) curEl.textContent = formatCurrency(curPrice);
 
     const livePnlEl = document.getElementById('hudLivePnL');
     if (livePnlEl) {
-      livePnlEl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}% (${pnlBrl >= 0 ? '+' : ''}R$ ${pnlBrl.toFixed(2)})`;
+      livePnlEl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}% (${pnlBrl >= 0 ? '+' : ''}${formatCurrency(pnlBrl)})`;
       livePnlEl.style.color = pnlPct >= 0 ? '#10b981' : '#ef4444';
     }
 
-    const tPrice = trailPrice || (entryPrice + (0.03 / (qty || 0.031)));
-    const sPrice = stopPrice || (entryPrice - (0.06 / (qty || 0.031)));
+    const tPrice = trailPrice || (entryPrice * 1.008);
+    const sPrice = stopPrice || (entryPrice * 0.982);
     const gaugeMarker = document.getElementById('candleGaugeMarker');
     if (gaugeMarker) {
       const range = targetPrice - sPrice;
@@ -1022,13 +1037,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const gaugeStatusText = document.getElementById('gaugeStatusText');
     if (gaugeStatusText) {
       if (curPrice >= targetPrice) {
-        gaugeStatusText.textContent = '🏆 ALVO SCALPER ATINGIDO (+R$ 0,05 NO BOLSO)!';
+        gaugeStatusText.textContent = '🏆 ALVO INSTITUCIONAL ATINGIDO (+R$ 0,22 LÍQ. NO BOLSO)!';
         gaugeStatusText.style.color = '#10b981';
       } else if (curPrice >= tPrice) {
-        gaugeStatusText.textContent = '🛡️ TRAILING LOCK ATIVADO (+R$ 0,03 GARANTIDO NO BOLSO)';
+        gaugeStatusText.textContent = '🛡️ TRAILING LOCK ATIVADO (+R$ 0,08 GARANTIDO NO BOLSO)';
         gaugeStatusText.style.color = '#a855f7';
       } else if (curPrice >= entryPrice) {
-        gaugeStatusText.textContent = '🟢 OPERANDO NO LUCRO FLUTUANTE (RUMO AOS +5 CENTAVOS)';
+        gaugeStatusText.textContent = '🟢 OPERANDO NO LUCRO FLUTUANTE (RUMO A 3x A TAXA)';
         gaugeStatusText.style.color = '#38bdf8';
       } else {
         gaugeStatusText.textContent = '🟡 DENTRO DA MARGEM NORMAL DE OSCILAÇÃO (STOP SEGURO)';
@@ -1151,22 +1166,22 @@ function updateActiveCandleHud(bot1Price, bot2Price, bot1Entry, bot2Entry, bot1P
       ? '● ROBÔ #2 (BETA SPEED)'
       : `● ${activeCandleState.botLabel ? activeCandleState.botLabel.toUpperCase() : 'RADAR DE MERCADO'}`;
   }
-  if (entryEl) entryEl.textContent = `R$ ${entryPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  if (curEl) curEl.textContent = `R$ ${curPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  if (targetEl) targetEl.textContent = `R$ ${targetPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  if (trailEl) trailEl.textContent = `R$ ${trailPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  if (stopEl) stopEl.textContent = `R$ ${stopPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (entryEl) entryEl.textContent = formatCurrency(entryPrice);
+  if (curEl) curEl.textContent = formatCurrency(curPrice);
+  if (targetEl) targetEl.textContent = formatCurrency(targetPrice);
+  if (trailEl) trailEl.textContent = formatCurrency(trailPrice);
+  if (stopEl) stopEl.textContent = formatCurrency(stopPrice);
 
   if (livePnlEl) {
-    livePnlEl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}% (${pnlBrl >= 0 ? '+' : ''}R$ ${pnlBrl.toFixed(2)})`;
+    livePnlEl.textContent = `${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}% (${pnlBrl >= 0 ? '+' : ''}${formatCurrency(pnlBrl)})`;
     livePnlEl.style.color = pnlPct >= 0 ? '#10b981' : '#ef4444';
   }
 
   // Atualiza Termômetro
-  if (gaugeStop) gaugeStop.textContent = `R$ ${stopPrice.toFixed(2)}`;
-  if (gaugeEntry) gaugeEntry.textContent = `R$ ${entryPrice.toFixed(2)}`;
-  if (gaugeTrail) gaugeTrail.textContent = `R$ ${trailPrice.toFixed(2)}`;
-  if (gaugeTarget) gaugeTarget.textContent = `R$ ${targetPrice.toFixed(2)}`;
+  if (gaugeStop) gaugeStop.textContent = formatCurrency(stopPrice);
+  if (gaugeEntry) gaugeEntry.textContent = formatCurrency(entryPrice);
+  if (gaugeTrail) gaugeTrail.textContent = formatCurrency(trailPrice);
+  if (gaugeTarget) gaugeTarget.textContent = formatCurrency(targetPrice);
 
   if (gaugeMarker) {
     const range = targetPrice - stopPrice;
@@ -1177,13 +1192,13 @@ function updateActiveCandleHud(bot1Price, bot2Price, bot1Entry, bot2Entry, bot1P
 
   if (gaugeStatusText) {
     if (curPrice >= targetPrice) {
-      gaugeStatusText.textContent = '🏆 ALVO SCALPER ATINGIDO (+R$ 0,05 NO BOLSO)!';
+      gaugeStatusText.textContent = '🏆 ALVO INSTITUCIONAL ATINGIDO (+R$ 0,22 LÍQ. NO BOLSO)!';
       gaugeStatusText.style.color = '#10b981';
     } else if (curPrice >= trailPrice) {
-      gaugeStatusText.textContent = '🛡️ TRAILING LOCK ATIVADO (+R$ 0,03 GARANTIDO NO BOLSO)';
+      gaugeStatusText.textContent = '🛡️ TRAILING LOCK ATIVADO (+R$ 0,08 GARANTIDO NO BOLSO)';
       gaugeStatusText.style.color = '#a855f7';
     } else if (curPrice >= entryPrice) {
-      gaugeStatusText.textContent = '🟢 OPERANDO NO LUCRO FLUTUANTE (RUMO AOS +5 CENTAVOS)';
+      gaugeStatusText.textContent = '🟢 OPERANDO NO LUCRO FLUTUANTE (RUMO A 3x A TAXA)';
       gaugeStatusText.style.color = '#38bdf8';
     } else {
       gaugeStatusText.textContent = '🟡 DENTRO DA MARGEM NORMAL DE OSCILAÇÃO (STOP SEGURO)';
